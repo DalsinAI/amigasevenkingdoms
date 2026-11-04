@@ -28,6 +28,9 @@
 #include <ODB.h>
 #include <OMOUSE.h>
 #include <OMOUSECR.h>
+#ifdef __amigaos__
+#include <amiga_le.h>
+#endif
 
 //---------- define constant ------------//
 
@@ -156,6 +159,9 @@ void MouseCursor::load_cursor_info()
 		cursorInfo = cursor_info_array+i;
 
 		memcpy( &bitmapOffset, cursorRec->bitmap_ptr, sizeof(uint32_t) );
+#ifdef __amigaos__
+		LE_SWAP(bitmapOffset);	// little-endian in the database
+#endif
 
 		cursorInfo->bitmap_ptr = res_bitmap.read_imported(bitmapOffset);
 
@@ -194,8 +200,16 @@ void MouseCursor::set_icon(int cursorId)
 
 	err_when( !icon_ptr );
 
+#ifdef __amigaos__
+	icon_width  = le_get16(icon_ptr);
+#else
 	icon_width  = *((short*)icon_ptr);
+#endif
+#ifdef __amigaos__
+	icon_height = le_get16((char*)(icon_ptr)+2);
+#else
 	icon_height = *((short*)icon_ptr+1);
+#endif
 
 	// ###### begin Gilbert 18/8 #####//
 	cur_icon = cursorId;

@@ -31,6 +31,9 @@
 #include <vga_util.h>
 #include <OIMGRES.h>
 #include <OBUTTON.h>
+#ifdef __amigaos__
+#include <amiga_le.h>
+#endif
 
 //----------- Begin of function Button::Button -----------//
 //
@@ -345,8 +348,16 @@ void Button::paint(int defIsPushed, int repaintBody)
 	{
 		if( body_ptr && repaintBody )
 		{
+#ifdef __amigaos__
+			int tx = x1 + ((x2-x1+1) - le_get16(body_ptr))/2;
+#else
 			int tx = x1 + ((x2-x1+1) - *((short*)body_ptr))/2;
+#endif
+#ifdef __amigaos__
+			int ty = y1 + ((y2-y1+1) - le_get16((char*)(body_ptr)+2))/2;
+#else
 			int ty = y1 + ((y2-y1+1) - *((short*)body_ptr+1))/2;
+#endif
 
 			Vga::active_buf->put_bitmap( tx, ty, (char*) body_ptr );   // 0 means not clear background
 		}

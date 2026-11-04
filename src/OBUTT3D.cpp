@@ -28,6 +28,9 @@
 #include <OMOUSE.h>
 #include <OIMGRES.h>
 #include <OBUTT3D.h>
+#ifdef __amigaos__
+#include <amiga_le.h>
+#endif
 
 //---------- define static vars ----------//
 
@@ -87,12 +90,19 @@ void Button3D::create(int pX1, int pY1, char buttonStyle,
 
 	//--------- set button size --------//
 
+#ifdef __amigaos__
+	x1 = pX1;
+	y1 = pY1;
+	x2 = x1+ le_get16(button_up_ptr) - 1;		// the bitmap's size is little-endian
+	y2 = y1+ le_get16(button_up_ptr+2) - 1;
+#else
 	short* iconPtr = (short*) button_up_ptr;
 
 	x1 = pX1;
 	y1 = pY1;
 	x2 = x1+ *iconPtr++ - 1;
 	y2 = y1+ *iconPtr - 1;
+#endif
 
 	//------ set button parameters -----//
 
@@ -129,8 +139,16 @@ void Button3D::create(int pX1, int pY1, const char* upButtonName,
 
 	x1 = pX1;
 	y1 = pY1;
+#ifdef __amigaos__
+	x2 = x1+ le_get16(button_up_ptr) - 1;
+#else
 	x2 = x1+ *((short*)button_up_ptr) - 1;
+#endif
+#ifdef __amigaos__
+	y2 = y1+ le_get16((char*)(button_up_ptr)+2) - 1;
+#else
 	y2 = y1+ *((short*)(button_up_ptr)+1) - 1;
+#endif
 
 	//------ set button parameters -----//
 
@@ -192,8 +210,16 @@ void Button3D::paint(int defIsPushed)
 
 	if( button_type == BUTTON_TYPE_SHELL && icon_ptr )
 	{
+#ifdef __amigaos__
+		int tx = x1 + ((x2-x1+1) - le_get16(icon_ptr))/2;
+#else
 		int tx = x1 + ((x2-x1+1) - *((short*)icon_ptr))/2;
+#endif
+#ifdef __amigaos__
+		int ty = y1 + ((y2-y1+1) - le_get16((char*)(icon_ptr)+2))/2;
+#else
 		int ty = y1 + ((y2-y1+1) - *((short*)icon_ptr+1))/2;
+#endif
 
 		tx -= 2;
 		ty -= 3;

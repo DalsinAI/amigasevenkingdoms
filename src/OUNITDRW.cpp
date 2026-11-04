@@ -33,6 +33,9 @@
 #include <ONATION.h>
 #include <OUNIT.h>
 #include <OCONFIG.h>
+#ifdef __amigaos__
+#include <amiga_le.h>
+#endif
 
 #ifdef NO_DEBUG_UNIT
 #undef err_when
@@ -233,8 +236,16 @@ void Unit::draw_selected()
 	err_when( max_hit_points > hitBarMax );
 	err_when( hit_points > max_hit_points );
 
+#ifdef __amigaos__
+	le_put16(dataPtr, curBarWidth);
+#else
 	*((short*)dataPtr) 	  = curBarWidth;
+#endif
+#ifdef __amigaos__
+	le_put16((char*)(dataPtr)+2, HIT_BAR_HEIGHT);
+#else
 	*(((short*)dataPtr)+1) = HIT_BAR_HEIGHT;
+#endif
 
 	dataPtr += sizeof(short) * 2;
 

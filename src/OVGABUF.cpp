@@ -31,6 +31,9 @@
 #include <OVGABUF.h>
 #include <gettext.h>
 #include <CmdLine.h>
+#ifdef __amigaos__
+#include <amiga_le.h>
+#endif
 
 //-------- Begin of function VgaBuf::VgaBuf ----------//
 
@@ -191,7 +194,11 @@ void VgaBuf::put_bitmap(int x,int y,char* bitmapPtr)
 	err_when( !buf_locked );
 
 	if( is_front )
+#ifdef __amigaos__
+		mouse.hide_area( x, y, x+le_get16(bitmapPtr)-1, y+le_get16((char*)(bitmapPtr)+2)-1 );
+#else
 		mouse.hide_area( x, y, x+*((short*)bitmapPtr)-1, y+*(((short*)bitmapPtr)+1)-1 );
+#endif
 
 	IMGblt(buf_ptr(), buf_pitch(), x, y, bitmapPtr);
 
@@ -210,7 +217,11 @@ void VgaBuf::put_bitmap_trans(int x,int y,char* bitmapPtr)
 	err_when( !buf_locked );
 
 	if( is_front )
+#ifdef __amigaos__
+		mouse.hide_area( x, y, x+le_get16(bitmapPtr)-1, y+le_get16((char*)(bitmapPtr)+2)-1 );
+#else
 		mouse.hide_area( x, y, x+*((short*)bitmapPtr)-1, y+*(((short*)bitmapPtr)+1)-1 );
+#endif
 
 	IMGbltTrans(buf_ptr(), buf_pitch(), x, y, bitmapPtr);
 
@@ -229,7 +240,11 @@ void VgaBuf::put_bitmap_remap(int x,int y,char* bitmapPtr,char *colorTable)
 	err_when( !buf_locked );
 
 	if( is_front )
+#ifdef __amigaos__
+		mouse.hide_area( x, y, x+le_get16(bitmapPtr)-1, y+le_get16((char*)(bitmapPtr)+2)-1 );
+#else
 		mouse.hide_area( x, y, x+*((short*)bitmapPtr)-1, y+*(((short*)bitmapPtr)+1)-1 );
+#endif
 
 	IMGbltRemap(buf_ptr(), buf_pitch(), x, y, bitmapPtr, colorTable);
 

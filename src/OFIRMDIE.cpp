@@ -29,6 +29,9 @@
 #include <OGAME.h>
 #include <ORESDB.h>
 #include <ALL.h>
+#ifdef __amigaos__
+#include <amiga_le.h>
+#endif
 
 
 #define FIRM_BUILD_DB 	"FDBUILD"
@@ -117,6 +120,9 @@ void FirmDieRes::load_bitmap_info()
 		firmBitmap    = firm_bitmap_array+i;
 
 		memcpy( &bitmapOffset, firmBitmapRec->bitmap_ptr, sizeof(uint32_t) );
+#ifdef __amigaos__
+		LE_SWAP(bitmapOffset);	// little-endian in the database
+#endif
 
 		// BUGHERE : bitmap is not yet loaded into memory, fill them before draw()
 		firmBitmap->bitmap_ptr = NULL;
@@ -370,8 +376,16 @@ void FirmDie::draw(int displayLayer)
 		{
 			char *bitmapPtr;
 			firmBitmap->bitmap_ptr = bitmapPtr = firm_die_res.res_bitmap.read_imported(firmBitmap->bitmap_offset);
+#ifdef __amigaos__
+			firmBitmap->width = le_get16(bitmapPtr);
+#else
 			firmBitmap->width = *(short *)bitmapPtr;
+#endif
+#ifdef __amigaos__
+			firmBitmap->height= le_get16((char*)(bitmapPtr)+2);
+#else
 			firmBitmap->height= *(1+(short *)bitmapPtr);
+#endif
 			firmBitmap->draw_at(loc_x1*ZOOM_LOC_WIDTH, loc_y1*ZOOM_LOC_HEIGHT, colorRemapTable, displayLayer);
 		}
 	}

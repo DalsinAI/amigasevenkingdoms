@@ -25,6 +25,9 @@
 #include <ODYNARRB.h>
 #include <dbglog.h>
 #include <file_io_visitor.h>
+#ifdef __amigaos__
+#include <amiga_le.h>
+#endif
 
 using namespace FileIOVisitor;
 
@@ -285,11 +288,20 @@ int DynArrayB::write_empty_room(File* filePtr)
 
 	if( empty_room_count > 0 )
 	{
+#ifdef __amigaos__
+		LE_SWAP_STRUCT( EmptyRoom, empty_room_array, empty_room_count );	// little-endian in the file
+		int rc = filePtr->file_write( empty_room_array,
+			 sizeof(EmptyRoom) * empty_room_count );
+		LE_SWAP_STRUCT( EmptyRoom, empty_room_array, empty_room_count );
+		if( !rc )
+			return 0;
+#else
 		if( !filePtr->file_write( empty_room_array,
 			 sizeof(EmptyRoom) * empty_room_count ) )
 		{
 			return 0;
 		}
+#endif
 	}
 
 	return 1;
@@ -322,6 +334,9 @@ int DynArrayB::read_empty_room(File* filePtr)
 		{
 			return 0;
 		}
+#ifdef __amigaos__
+		LE_SWAP_STRUCT( EmptyRoom, empty_room_array, empty_room_count );	// little-endian in the file
+#endif
 	}
 	else // when empty_room_count == 0
 	{

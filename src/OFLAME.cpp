@@ -29,6 +29,9 @@
 #include <OVGABUF.h>
 #include <ALL.h>
 #include <COLCODE.h>
+#ifdef __amigaos__
+#include <amiga_le.h>
+#endif
 
 
 //-------------- Begin Function Flame::Flame ----------//
@@ -79,8 +82,16 @@ void Flame::init(short width, short height, short flameWidth, FlameType flameTyp
 	bitmap = (unsigned char *) mem_resize(bitmap, width*height + 2*sizeof(short) );
 
 	memset(bitmap+2*sizeof(short), width*height, 255);
+#ifdef __amigaos__
+	le_put16(bitmap, width);
+#else
 	*(short *)bitmap = width;
+#endif
+#ifdef __amigaos__
+	le_put16((char*)(bitmap)+2, height);
+#else
 	*(((short *)bitmap)+1) = height;
+#endif
 
 	smooth = 16;
 	shade_base = -1;

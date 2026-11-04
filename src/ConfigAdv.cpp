@@ -269,7 +269,11 @@ void ConfigAdv::reset()
 
 	vga_allow_highdpi = 0;
 	vga_full_screen = 1;
+#ifdef __amigaos__
+	vga_full_screen_desktop = 0;	// a screen of the game's own 800x600, not the Workbench's size scaled
+#else
 	vga_full_screen_desktop = 1;
+#endif
 	vga_keep_aspect_ratio = 1;
 	vga_pause_on_focus_loss = 0;
 

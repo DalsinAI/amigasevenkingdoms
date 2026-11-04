@@ -1,0 +1,103 @@
+# Seven Kingdoms: Ancient Adversaries for AmigaOS 3.x, 68040/68060 + FPU,
+# on OpenGPU's SDL 2.
+#
+#   make -f amiga/Makefile.amigaos -j2 \
+#        STOVE=/path/to/openamigagcc-16.2.0-open4 \
+#        NDK=/path/to/OpenNDK/Include_H SDL2KIT=/path/to/opengpu-sdk
+#
+# STOVE is GFOpenAmigaGCC 16.2.0-open4 or later. SDL2KIT is the OpenGPU
+# developer kit: libSDL2.a, the program's half of LIBS:OpenGPU/SDL2.module
+# (screen, keyboard, mouse and sound). No enet, curl or OpenAL: the
+# multiplayer menu is off and amiga/amiga_audio.cpp plays the sound on
+# SDL 2's audio queue. Upstream's own data (GPL 2, data/) goes into the
+# drawer: build/amigaos/SevenKingdoms/.
+
+STOVE   ?= $(HOME)/CradleLab/toolchain/openamigagcc-16.2.0-open4-x86_64-linux
+NDK     ?= $(HOME)/CradleLab/gfopensdk/OpenNDK/Include_H
+SDL2KIT ?= /mnt/amigachrome/team2/deps/opengpu-sdk
+ZLIB    ?= $(HOME)/CradleLab/zlib-1.3.1
+CC      = $(STOVE)/bin/m68k-amigaos-gcc
+CXX     = $(STOVE)/bin/m68k-amigaos-g++
+CPU     ?= -m68040 -m68881
+# -fno-tree-loop-distribute-patterns: GCC 16's loop miscompile (the kit's
+# sdl2-config gives it for GCC 16 too).
+OPT     ?= -O2 -fomit-frame-pointer -fno-tree-loop-distribute-patterns
+
+DEFS    = -D__amigaos__
+INC     = -Iamiga -Iinclude -I$(SDL2KIT)/include/SDL2 -I$(NDK)
+# As upstream's configure: config.h first, plain char signed.
+COMMON  = -noixemul $(OPT) $(CPU) -fsigned-char -include amiga/config.h $(DEFS) $(INC)
+# Upstream's files build with the compiler's default warnings, as
+# upstream's configure builds them (it adds no -Wall); the port's own
+# files in amiga/ with -Wall -Wextra.
+CXXFLAGS = $(COMMON) -std=gnu++11
+CFLAGS   = $(COMMON)
+AMIGAWARN = -Wall -Wextra
+LDFLAGS = -noixemul $(CPU)
+LIBS    = -L$(SDL2KIT)/lib -lSDL2 -lm
+BUILD   = build/amigaos
+OBJDIR  = $(BUILD)/obj
+OUT     = $(BUILD)/SevenKingdoms
+PROG    = SevenKingdoms
+
+# As src/Makefile.am builds 7kaa without the OpenAL backend: every file
+# but OTRANSL.cpp (not in upstream's list either), the multiplayer stub
+# (enet off), the WAV reader and the C++ image routines.
+SRC     = $(filter-out src/OTRANSL.cpp,$(wildcard src/*.cpp)) \
+          src/enet/multiplayer.cpp src/openal/wav_stream.cpp \
+          $(wildcard src/imgfun/generic/*.cpp)
+OBJS    = $(SRC:%.cpp=$(OBJDIR)/%.o) \
+          $(OBJDIR)/amiga/amiga_audio.o $(OBJDIR)/amiga/amiga_dir.o \
+          $(OBJDIR)/amiga/stack.o $(OBJDIR)/amiga/pthread_stubs.o \
+          $(OBJDIR)/amiga/mathl.o \
+          $(OBJDIR)/amiga/amiga_le.o $(OBJDIR)/amiga/le_tables.o
+
+ICONS   = $(wildcard amiga/icons/*.info)
+DATADIRS = ENCYC ENCYC2 IMAGE RESOURCE SCENARI2 SCENARIO SOUND SPRITE TUTORIAL
+
+all: $(OUT)/$(PROG) package
+
+$(OUT)/$(PROG): $(OBJS) | $(OUT)
+	$(CXX) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
+
+package: $(OUT)/$(PROG) $(ICONS) AMIGA_PORT.md COPYING README
+	for d in $(DATADIRS); do mkdir -p $(OUT)/$$d && cp -R data/$$d/. $(OUT)/$$d/ ; done
+	find $(OUT) -name Makefile.am -exec rm -f {} +
+	mkdir -p $(OUT)/Saves
+	cp AMIGA_PORT.md $(OUT)/ReadMe
+	cp README $(OUT)/README-7kaa
+	cp COPYING $(OUT)/COPYING.txt
+	cp amiga/icons/SevenKingdoms.info amiga/icons/ReadMe.info \
+	   amiga/icons/README-7kaa.info amiga/icons/COPYING.txt.info $(OUT)/
+	cd $(OUT) && find . -mindepth 1 -type d | while read d; do cp $(CURDIR)/amiga/icons/Data.info "$$d.info"; done
+	cp amiga/icons/SevenKingdoms-drawer.info $(BUILD)/SevenKingdoms.info
+
+# The port's own C++ includes upstream's headers as system headers, so
+# that -Wall -Wextra speaks only of the port's code.
+$(OBJDIR)/amiga/%.o: amiga/%.cpp amiga/config.h amiga/amiga_audio.h amiga/amiga_le.h
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) $(AMIGAWARN) -isystem include -c -o $@ $<
+
+# le_tables.cpp checks each saved structure's layout against the PC's
+# with offsetof(), private members too: access does not change the layout.
+$(OBJDIR)/amiga/le_tables.o: amiga/le_tables.cpp amiga/tools/le_types.cpp amiga/amiga_le.h
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) $(AMIGAWARN) -isystem include -Dprivate=public -Dprotected=public -c -o $@ $<
+
+$(OBJDIR)/amiga/%.o: amiga/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(AMIGAWARN) -c -o $@ $<
+
+$(OBJDIR)/%.o: %.cpp amiga/config.h amiga/amiga_le.h
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+objs: $(OBJS)
+
+$(OUT):
+	mkdir -p $@
+
+clean:
+	rm -rf $(BUILD)
+
+.PHONY: all package objs clean

@@ -25,6 +25,10 @@
 #ifndef __OSNOWRES_H
 #define __OSNOWRES_H
 
+#ifdef __amigaos__
+#include <amiga_le.h>
+#endif
+
 #ifndef __ORESDB_H
 #include <ORESDB.h>
 #endif
@@ -72,8 +76,16 @@ struct SnowInfo
 	int				rand_prev(unsigned rand)	{ return is_root() ? snow_map_id : prev_file[rand % prev_count]->snow_map_id; }
 	SnowInfo *		rand_next_ptr(unsigned rand)	{ return is_leaf() ? this : next_file[rand % next_count]; }
 	SnowInfo *		rand_prev_ptr(unsigned rand)	{ return is_root() ? NULL : prev_file[rand % prev_count]; }
+#ifdef __amigaos__
+	short				bitmap_width() { return le_get16(bitmap_ptr); }
+#else
 	short				bitmap_width() { return *(short *)bitmap_ptr; }
+#endif
+#ifdef __amigaos__
+	short				bitmap_height() { return le_get16((char*)(bitmap_ptr)+2); }
+#else
 	short				bitmap_height() { return *(((short *)bitmap_ptr)+1); }
+#endif
 	void				draw_at(short absX, short absY);
 };
 

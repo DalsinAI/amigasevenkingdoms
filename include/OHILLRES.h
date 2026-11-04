@@ -26,6 +26,10 @@
 #ifndef __OHILLRES_H
 #define __OHILLRES_H
 
+#ifdef __amigaos__
+#include <amiga_le.h>
+#endif
+
 #ifndef __ORESDB_H
 #include <ORESDB.h>
 #endif
@@ -71,8 +75,16 @@ struct HillBlockInfo
 	char* bitmap_ptr;
 
 public:
+#ifdef __amigaos__
+	short	bitmap_width()		{ return le_get16(bitmap_ptr); }
+#else
 	short	bitmap_width()		{ return *(short *)bitmap_ptr; }
+#endif
+#ifdef __amigaos__
+	short bitmap_height()	{ return le_get16((char*)(bitmap_ptr)+2); }
+#else
 	short bitmap_height()	{ return *(((short *)bitmap_ptr)+1); }
+#endif
 
 	void	draw(int xLoc, int yLoc, int layerMask=-1);
 	void 	draw_at(int absBaseX, int absBaseY, int layerMask=-1);

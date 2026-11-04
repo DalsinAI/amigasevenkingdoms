@@ -40,6 +40,9 @@
 #include <OSaveGameInfo.h>
 #include <dbglog.h>
 #include "gettext.h"
+#ifdef __amigaos__
+#include <amiga_le.h>
+#endif
 
 DBGLOG_DEFAULT_CHANNEL(GameFile);
 
@@ -66,6 +69,18 @@ enum { ERROR_NONE = 0,
 };
 
 static int last_status = ERROR_NONE;
+
+#ifdef __amigaos__
+// The header's numbers are little-endian in the file.
+static void swap_header(SaveGameHeader* h)
+{
+	LE_SWAP(h->class_size);
+	LE_SWAP(h->info.game_date);
+	LE_SWAP(h->info.file_date.dwLowDateTime);
+	LE_SWAP(h->info.file_date.dwHighDateTime);
+	LE_SWAP(h->info.terrain_set);
+}
+#endif
 
 
 //-------- Begin of function GameFile::save_game --------//
@@ -148,7 +163,11 @@ int GameFile::load_game(const char* filePath, SaveGameInfo* /*out*/ saveGameInfo
 			rc = 0;
 			last_status = ERROR_FILE_HEADER;
 		}
+#ifdef __amigaos__
+		else if( (swap_header(&saveGameHeader), !validate_header(&saveGameHeader)) )
+#else
 		else if( !validate_header(&saveGameHeader) )
+#endif
 		{
 			rc = 0;
 			last_status = ERROR_FILE_FORMAT;
@@ -218,6 +237,9 @@ bool GameFile::read_header(const char* filePath, SaveGameInfo* /*out*/ saveGameI
 	if( file.file_open(filePath, 0, 1)      // last 1=allow varying read & write size
 		&& file.file_read(&saveGameHeader, sizeof(SaveGameHeader)) )
 	{
+#ifdef __amigaos__
+		swap_header(&saveGameHeader);
+#endif
 		if( !validate_header(&saveGameHeader) )
 		{
 			success = false;
@@ -304,6 +326,9 @@ int GameFile::write_game_header(const SaveGameInfo& saveGameInfo, File* filePtr)
 	SaveGameHeader saveGameHeader;
 	saveGameHeader.class_size = CLASS_SIZE;
 	saveGameHeader.info = saveGameInfo;
+#ifdef __amigaos__
+	swap_header(&saveGameHeader);
+#endif
 	return filePtr->file_write( &saveGameHeader, sizeof(SaveGameHeader) );     // write the whole object to the saved game file
 }
 //--------- End of function GameFile::write_game_header -------//

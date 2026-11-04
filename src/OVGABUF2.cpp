@@ -30,6 +30,9 @@
 #include <OVGABUF.h>
 #include <OIMGRES.h>
 #include <OFONT.h>
+#ifdef __amigaos__
+#include <amiga_le.h>
+#endif
 
 //------- Define static class member vars ---------//
 
@@ -294,8 +297,16 @@ void VgaBuf::indicator(int barType, int x1, int y1, float curValue, float maxVal
 	}
 
 	// -------- calculate the boundary or the indicator ---------//
+#ifdef __amigaos__
+	int width = le_get16(bgPtr);
+#else
 	int width = *(short *)bgPtr;
+#endif
+#ifdef __amigaos__
+	int height = le_get16((char*)(bgPtr)+2);
+#else
 	int height = *(((short *)bgPtr) + 1);
+#endif
 
 	int bufferX1 = x1;
 	int bufferY1 = y1;
@@ -310,9 +321,17 @@ void VgaBuf::indicator(int barType, int x1, int y1, float curValue, float maxVal
 			bufferX1 = 0;
 			bufferY1 = 0;
 			destPtr = tempBuffer;
+#ifdef __amigaos__
+			le_put16(destPtr, width);
+#else
 			*(short *)destPtr = width;
+#endif
 			destPtr += sizeof(short);
+#ifdef __amigaos__
+			le_put16(destPtr, height);
+#else
 			*(short *)destPtr = height;
+#endif
 			destPtr += sizeof(short);
 			destPitch = width;
 		}

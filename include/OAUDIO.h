@@ -23,6 +23,8 @@
 
 #if defined(USE_OPENAL)
 #include <openal_audio.h>
+#elif defined(__amigaos__) && defined(USE_AMIGA_AUDIO)
+#include <amiga_audio.h>
 #else
 #error "An audio backend must be specified."
 #endif

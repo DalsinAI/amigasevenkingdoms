@@ -30,6 +30,9 @@
 #include <ONATION.h>
 #include <WALLTILE.h>
 #include <OWALLRES.h>
+#ifdef __amigaos__
+#include <amiga_le.h>
+#endif
 
 //---------- #define constant ------------//
 
@@ -128,6 +131,9 @@ void WallRes::load_wall_info()
 		wallInfo->draw_wall_id = misc.atoi(wallRec->draw_wall, wallRec->WALL_ID_LEN);
 
 		memcpy( &bitmapOffset, wallRec->bitmap_ptr, sizeof(uint32_t) );
+#ifdef __amigaos__
+		LE_SWAP(bitmapOffset);	// little-endian in the database
+#endif
 		wallInfo->bitmap_ptr	= res_bitmap.read_imported(bitmapOffset);
 
 		if( wallInfo->wall_id > max_wall_id)

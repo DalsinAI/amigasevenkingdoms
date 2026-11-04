@@ -798,7 +798,13 @@ void Vga::flip()
       return;
 
    cur_ticks = SDL_GetTicks();
+#ifdef __amigaos__
+   // Each frame shown is 800x600 pixels turned to the screen's depth and
+   // copied: on a 68040, at most 25 frames a second leave time to the game.
+   if (cur_ticks > ticks + 40 || cur_ticks < ticks) {
+#else
    if (cur_ticks > ticks + 17 || cur_ticks < ticks) {
+#endif
       ticks = cur_ticks;
       SDL_BlitSurface(vga_front.surface, NULL, target, NULL);
       SDL_UpdateTexture(texture, NULL, target->pixels, target->pitch);

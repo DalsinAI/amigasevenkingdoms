@@ -29,6 +29,9 @@
 #include <OHILLRES.h>
 #include <OCONFIG.h>
 #include <ALL.h>
+#ifdef __amigaos__
+#include <amiga_le.h>
+#endif
 
 //---------- #define constant ------------//
 
@@ -134,6 +137,9 @@ void HillRes::load_hill_block_info()
 		hillBlockInfo->offset_y = misc.atoi(hillBlockRec->offset_y, hillBlockRec->OFFSET_LEN);
 
 		memcpy( &bitmapOffset, hillBlockRec->bitmap_ptr, sizeof(uint32_t) );
+#ifdef __amigaos__
+		LE_SWAP(bitmapOffset);	// little-endian in the database
+#endif
 		hillBlockInfo->bitmap_ptr = res_bitmap.read_imported(bitmapOffset);
 	}
 

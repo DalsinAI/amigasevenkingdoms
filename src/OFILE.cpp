@@ -28,6 +28,9 @@
 #include <string.h>
 #include <dbglog.h>
 #include <OFILE.h>
+#ifdef __amigaos__
+#include <amiga_le.h>
+#endif
 #include <errno.h>
 
 DBGLOG_DEFAULT_CHANNEL(File);
@@ -276,6 +279,9 @@ int8_t File::file_get_char()
 
 int File::file_put_short(int16_t value)
 {
+#ifdef __amigaos__
+	value = (int16_t)le_swap16(value);	// the files are little-endian
+#endif
 	err_when(!file_handle);
 
 	fwrite(&value, 1, sizeof(int16_t), file_handle);
@@ -296,7 +302,7 @@ int16_t File::file_get_short()
 {
     	err_when(!file_handle);
 
-    int16_t value;
+    int16_t value = 0;
     fread(&value, 1, sizeof(int16_t), file_handle);
 
 	if (ferror(file_handle))
@@ -308,11 +314,17 @@ int16_t File::file_get_short()
 		return 0;
 	}
 
+#ifdef __amigaos__
+	value = (int16_t)le_swap16(value);	// the files are little-endian
+#endif
 	return value;
 }
 
 int File::file_put_unsigned_short(uint16_t value)
 {
+#ifdef __amigaos__
+	value = (uint16_t)le_swap16(value);	// the files are little-endian
+#endif
     	err_when(!file_handle);
 
     fwrite(&value, 1, sizeof(uint16_t), file_handle);
@@ -333,7 +345,7 @@ uint16_t File::file_get_unsigned_short()
 {
     	err_when(!file_handle);
 
-    uint16_t value;
+    uint16_t value = 0;
     fread(&value, 1, sizeof(uint16_t), file_handle);
 
 	if (ferror(file_handle))
@@ -345,11 +357,17 @@ uint16_t File::file_get_unsigned_short()
 		return 0;
 	}
 
+#ifdef __amigaos__
+	value = (uint16_t)le_swap16(value);	// the files are little-endian
+#endif
 	return value;
 }
 
 int File::file_put_long(int32_t value)
 {
+#ifdef __amigaos__
+	value = (int32_t)le_swap32(value);	// the files are little-endian
+#endif
     	err_when(!file_handle);
 
     fwrite(&value, 1, sizeof(int32_t), file_handle);
@@ -370,7 +388,7 @@ int32_t File::file_get_long()
 {
     	err_when(!file_handle);
 
-    int32_t value;
+    int32_t value = 0;
     fread(&value, 1, sizeof(int32_t), file_handle);
 
 	if (ferror(file_handle))
@@ -382,6 +400,9 @@ int32_t File::file_get_long()
 		return 0;
 	}
 
+#ifdef __amigaos__
+	value = (int32_t)le_swap32(value);	// the files are little-endian
+#endif
 	return value;
 }
 

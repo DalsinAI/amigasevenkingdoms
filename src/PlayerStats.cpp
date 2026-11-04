@@ -23,6 +23,9 @@
 
 #include <PlayerStats.h>
 #include <OSYS.h>
+#ifdef __amigaos__
+#include <amiga_le.h>
+#endif
 
 extern Sys sys;			// For the config directory
 using namespace nsPlayerStats;
@@ -69,6 +72,10 @@ bool PlayerStats::load_player_stats(bool force_reload) {
 	RecordHeader hdr;
 	rc = file.file_read(&hdr, sizeof(RecordHeader));
 	if (!rc) { return false; }
+#ifdef __amigaos__
+	LE_SWAP_STRUCT(RecordHeader, &hdr, 1);	// little-endian in the file
+	if (hdr.rec_size != sizeof(ScenStat) || hdr.rec_count > 4096) { file.file_close(); return false; }
+#endif
 
 	//--------- Read Record Data ----------//
 
@@ -90,6 +97,9 @@ bool PlayerStats::load_player_stats(bool force_reload) {
 		scn_stat_arr = (ScenStat *)mem_add_clear(hdr.rec_size*hdr.rec_count);
 		scn_stat_arr_len = hdr.rec_count;
 		rc = file.file_read(scn_stat_arr, hdr.rec_size*hdr.rec_count);
+#ifdef __amigaos__
+		LE_SWAP_STRUCT(ScenStat, scn_stat_arr, hdr.rec_count);
+#endif
 	default:
 		rc = 0;
 	}
@@ -123,11 +133,23 @@ bool PlayerStats::write_player_stats() {
 	hdr.rec_count = scn_stat_arr_len;
 	hdr.rec_type = RecordType::ScenarioPlayStatus;
 	hdr.rec_size = sizeof(ScenStat);
+#ifdef __amigaos__
+	RecordHeader fileHdr = hdr;
+	LE_SWAP_STRUCT(RecordHeader, &fileHdr, 1);	// little-endian in the file
+	rc = file.file_write(&fileHdr, sizeof(RecordHeader));
+	if (!rc) { return false; }
+
+	//--------- Write Record Data ----------//
+	LE_SWAP_STRUCT(ScenStat, scn_stat_arr, hdr.rec_count);
+	rc = file.file_write(scn_stat_arr, hdr.rec_size*hdr.rec_count);
+	LE_SWAP_STRUCT(ScenStat, scn_stat_arr, hdr.rec_count);
+#else
 	rc = file.file_write(&hdr, sizeof(RecordHeader));
 	if (!rc) { return false; }
 
 	//--------- Write Record Data ----------//
 	rc = file.file_write(scn_stat_arr, hdr.rec_size*hdr.rec_count);
+#endif
 
 	file.file_close();
 	return rc == 1 ? true : false;
