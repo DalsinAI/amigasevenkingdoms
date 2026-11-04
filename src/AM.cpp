@@ -296,6 +296,10 @@ static void extra_error_handler();
 // DEBUG3 - debugging some functions (e.g. Location::get_loc()) which
 //          will cause major slowdown.
 //
+#ifdef __amigaos__
+extern "C" void amiga_screens_close_leftovers(void);
+#endif
+
 int main(int argc, char **argv)
 {
 	if (!sys.set_game_dir())
@@ -357,6 +361,10 @@ int main(int argc, char **argv)
 	if( !sys.init() )
 	{
 		vga.save_status_report();
+#ifdef __amigaos__
+		SDL_Quit();
+		amiga_screens_close_leftovers();	// or SDL2.module's screens stay, grey
+#endif
 		return 1;
 	}
 

@@ -927,6 +927,13 @@ static int sort_game_file_function( const void *a, const void *b )
 {
 	int firstAuto = 0, secondAuto = 0;
 
+#ifdef __amigaos__
+	// A name equals itself: without this AUTO.SAV is "less" than AUTO.SAV,
+	// and libnix's qsort() loops for ever on such a comparison.
+	if( strcmpi( ((SaveGame*)a)->file_info.name, ((SaveGame*)b)->file_info.name ) == 0 )
+		return 0;
+#endif
+
 	firstAuto = strcmpi( ((SaveGame*)a)->file_info.name, "AUTO.SAV" ) == 0 ? 1 :
 		(strcmpi( ((SaveGame*)a)->file_info.name, "AUTO2.SAV" ) == 0 ? 2 : 0);
 	if (firstAuto != 1) // only check second if first is not AUTO.SAV

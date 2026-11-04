@@ -7,7 +7,8 @@ https://github.com/the3dfxdude/7kaa, master at commit
 README note, GPL-2.0), the real-time strategy game, for AmigaOS 3.2 on a
 68040 or 68060 with an FPU, on OpenGPU's SDL 2.
 
-Status: builds and links; not yet run on an Amiga.
+Status: runs in the lab (AmigaChrome, OpenGPU 0.6): main menu, a new game
+(map, towns, sprites), the game menu and quitting back to the Workbench.
 
 
 What you need
@@ -179,6 +180,16 @@ three reads in OFILE.cpp that now start at 0 instead of uninitialised):
 - src/ConfigAdv.cpp: a screen of 800x600, not the desktop's size scaled;
 - src/OVGA.cpp: at most 25 frames a second shown;
 - src/OMISC.cpp: a drawer that exists already is not an error.
+- src/OVGA.cpp: a 32-bit XRGB texture whatever the window reports
+  (OpenGPU's SDL 2 reports SDL_PIXELFORMAT_RGB24, which upstream refuses,
+  so the game stopped before its first picture); and the screens
+  SDL2.module leaves behind are dealt with (amiga/amiga_screens.c: the
+  module, 0.6, leaves two empty screens open after a SDL_WINDOW_FULLSCREEN
+  window; the game closes them after SDL_Quit(), or sends them behind the
+  Workbench). src/AM.cpp does the same when start-up fails.
+- src/OSaveGameArray.cpp: the saved-game sort says a name equals itself;
+  upstream's comparison put AUTO.SAV before AUTO.SAV, and libnix's qsort()
+  loops for ever on that once there are autosaves.
 - src/PlayerStats.cpp also refuses a PLAYSTAT.DAT whose record size is not
   its own (it would otherwise allocate what the file says).
 
@@ -196,6 +207,11 @@ What a tester should check first
    (version 2): they are PC-written, so they test the saved-game swapping.
 4. The hall of fame after a game, and the frame rate (Vga::flip() is the
    cost).
+5. Quitting leaves no grey screen in front of the Workbench.
+
+In the lab, keep the pointer moving into a click: resting on a button for a
+second brings up its help box, and the next click only closes it (as on
+the PC).
 
 
 Licence

@@ -49,7 +49,7 @@ SRC     = $(filter-out src/OTRANSL.cpp,$(wildcard src/*.cpp)) \
 OBJS    = $(SRC:%.cpp=$(OBJDIR)/%.o) \
           $(OBJDIR)/amiga/amiga_audio.o $(OBJDIR)/amiga/amiga_dir.o \
           $(OBJDIR)/amiga/stack.o $(OBJDIR)/amiga/pthread_stubs.o \
-          $(OBJDIR)/amiga/mathl.o \
+          $(OBJDIR)/amiga/mathl.o $(OBJDIR)/amiga/amiga_screens.o \
           $(OBJDIR)/amiga/amiga_le.o $(OBJDIR)/amiga/le_tables.o
 
 ICONS   = $(wildcard amiga/icons/*.info)
