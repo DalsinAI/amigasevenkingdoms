@@ -45,6 +45,9 @@
 #include <file_reader.h>
 
 #include <OGF_V1.h>
+#ifdef __amigaos__
+#include <amiga_le.h>
+#endif
 
 using namespace FileIOVisitor;
 
@@ -310,25 +313,52 @@ int Unit::write_file(File* filePtr)
 
    //--------------- write memory data ----------------//
 
+#ifdef __amigaos__
+	if( result_node_array )
+	{
+		LE_SWAP_STRUCT( ResultNode, result_node_array, result_node_count );	// little-endian in the file
+		int rc = filePtr->file_write( result_node_array, sizeof(ResultNode) * result_node_count );
+		LE_SWAP_STRUCT( ResultNode, result_node_array, result_node_count );
+		if( !rc )
+			return 0;
+	}
+#else
 	if( result_node_array )
 	{
 		if( !filePtr->file_write( result_node_array, sizeof(ResultNode) * result_node_count ) )
 			return 0;
 	}
+#endif
 
 	//### begin alex 15/10 ###//
 	if(way_point_array)
 	{
 		err_when(way_point_array_size==0 || way_point_array_size<way_point_count);
+#ifdef __amigaos__
+		LE_SWAP_STRUCT( ResultNode, way_point_array, way_point_array_size );	// little-endian in the file
+		int rc = filePtr->file_write(way_point_array, sizeof(ResultNode)*way_point_array_size);
+		LE_SWAP_STRUCT( ResultNode, way_point_array, way_point_array_size );
+		if( !rc )
+			return 0;
+#else
 		if(!filePtr->file_write(way_point_array, sizeof(ResultNode)*way_point_array_size))
 			return 0;
+#endif
 	}
 	//#### end alex 15/10 ####//
 
 	if( team_info )
 	{
+#ifdef __amigaos__
+		LE_SWAP_STRUCT( TeamInfo, team_info, 1 );	// little-endian in the file
+		int rc = filePtr->file_write( team_info, sizeof(TeamInfo) );
+		LE_SWAP_STRUCT( TeamInfo, team_info, 1 );
+		if( !rc )
+			return 0;
+#else
 		if( !filePtr->file_write( team_info, sizeof(TeamInfo) ) )
 			return 0;
+#endif
    }
 
    return 1;
@@ -388,6 +418,9 @@ int Unit::read_file(File* filePtr)
 
 		if( !filePtr->file_read( result_node_array, sizeof(ResultNode) * result_node_count ) )
 			return 0;
+#ifdef __amigaos__
+		LE_SWAP_STRUCT( ResultNode, result_node_array, result_node_count );	// little-endian in the file
+#endif
 	}
 
 	//### begin alex 15/10 ###//
@@ -397,6 +430,9 @@ int Unit::read_file(File* filePtr)
 
 		if(!filePtr->file_read(way_point_array, sizeof(ResultNode)*way_point_array_size))
 			return 0;
+#ifdef __amigaos__
+		LE_SWAP_STRUCT( ResultNode, way_point_array, way_point_array_size );	// little-endian in the file
+#endif
 	}
 	//#### end alex 15/10 ####//
 
@@ -406,6 +442,9 @@ int Unit::read_file(File* filePtr)
 
 		if( !filePtr->file_read( team_info, sizeof(TeamInfo) ) )
 			return 0;
+#ifdef __amigaos__
+		LE_SWAP_STRUCT( TeamInfo, team_info, 1 );	// little-endian in the file
+#endif
 	}
 
 	//----------- post-process the data read ----------//
@@ -439,8 +478,20 @@ int Unit::write_derived_file(File* filePtr)
 
    if( writeSize > 0 )
    {
+#ifdef __amigaos__
+		// the derived class's numbers are little-endian in the file
+		const LeTable *table = le_unit_derived_table(unit_id);
+		if( table )
+			le_swap_table_part( this, *table, sizeof(Unit), sizeof(Unit)+writeSize );
+		int rc = filePtr->file_write( (char*) this + sizeof(Unit), writeSize );
+		if( table )
+			le_swap_table_part( this, *table, sizeof(Unit), sizeof(Unit)+writeSize );
+		if( !rc )
+			return 0;
+#else
       if( !filePtr->file_write( (char*) this + sizeof(Unit), writeSize ) )
          return 0;
+#endif
    }
 
    return 1;
@@ -460,6 +511,11 @@ int Unit::read_derived_file(File* filePtr)
    {
       if( !filePtr->file_read( (char*) this + sizeof(Unit), readSize ) )
          return 0;
+#ifdef __amigaos__
+		const LeTable *table = le_unit_derived_table(unit_id);	// little-endian in the file
+		if( table )
+			le_swap_table_part( this, *table, sizeof(Unit), sizeof(Unit)+readSize );
+#endif
 	}
 
    return 1;
@@ -741,8 +797,20 @@ int Bullet::write_derived_file(File *filePtr)
 
 	if( writeSize > 0 )
 	{
+#ifdef __amigaos__
+		// the derived class's numbers are little-endian in the file
+		const LeTable *table = le_bullet_derived_table(sprite_id);
+		if( table )
+			le_swap_table_part( this, *table, sizeof(Bullet), sizeof(Bullet)+writeSize );
+		int rc = filePtr->file_write( (char*) this + sizeof(Bullet), writeSize );
+		if( table )
+			le_swap_table_part( this, *table, sizeof(Bullet), sizeof(Bullet)+writeSize );
+		if( !rc )
+			return 0;
+#else
 		if( !filePtr->file_write( (char*) this + sizeof(Bullet), writeSize ) )
 			return 0;
+#endif
 	}
 
 	return 1;
@@ -762,6 +830,11 @@ int Bullet::read_derived_file(File *filePtr)
 	{
 		if( !filePtr->file_read( (char*) this + sizeof(Bullet), readSize ) )
 			return 0;
+#ifdef __amigaos__
+		const LeTable *table = le_bullet_derived_table(sprite_id);	// little-endian in the file
+		if( table )
+			le_swap_table_part( this, *table, sizeof(Bullet), sizeof(Bullet)+readSize );
+#endif
 	}
 
 	return 1;
@@ -922,8 +995,16 @@ int FirmArray::write_file(File* filePtr)
 
          if( firmPtr->worker_array )
          {
+#ifdef __amigaos__
+            LE_SWAP_STRUCT( Worker, firmPtr->worker_array, MAX_WORKER );	// little-endian in the file
+            int rc = filePtr->file_write( firmPtr->worker_array, MAX_WORKER*sizeof(Worker) );
+            LE_SWAP_STRUCT( Worker, firmPtr->worker_array, MAX_WORKER );
+            if( !rc )
+               return 0;
+#else
             if( !filePtr->file_write( firmPtr->worker_array, MAX_WORKER*sizeof(Worker) ) )
                return 0;
+#endif
          }
 
          //------ write data in derived class ------//
@@ -988,6 +1069,9 @@ int FirmArray::read_file(File* filePtr)
 
             if( !filePtr->file_read( firmPtr->worker_array, MAX_WORKER*sizeof(Worker) ) )
                return 0;
+#ifdef __amigaos__
+            LE_SWAP_STRUCT( Worker, firmPtr->worker_array, MAX_WORKER );	// little-endian in the file
+#endif
 
             firmPtr->sort_worker(); // if this one selected, refresh interface
          }
@@ -1035,8 +1119,20 @@ int Firm::write_derived_file(File* filePtr)
 
    if( writeSize > 0 )
    {
+#ifdef __amigaos__
+		// the derived class's numbers are little-endian in the file
+		const LeTable *table = le_firm_derived_table(firm_id);
+		if( table )
+			le_swap_table_part( this, *table, sizeof(Firm), sizeof(Firm)+writeSize );
+		int rc = filePtr->file_write( (char*) this + sizeof(Firm), writeSize );
+		if( table )
+			le_swap_table_part( this, *table, sizeof(Firm), sizeof(Firm)+writeSize );
+		if( !rc )
+			return 0;
+#else
       if( !filePtr->file_write( (char*) this + sizeof(Firm), writeSize ) )
          return 0;
+#endif
    }
 
    return 1;
@@ -1063,6 +1159,11 @@ int Firm::read_derived_file(File* filePtr)
 
       if( !filePtr->file_read( (char*) this + sizeof(Firm), readSize ) )
          return 0;
+#ifdef __amigaos__
+		const LeTable *table = le_firm_derived_table(firm_id);	// little-endian in the file
+		if( table )
+			le_swap_table_part( this, *table, sizeof(Firm), sizeof(Firm)+readSize );
+#endif
    }
 
    return 1;
@@ -1083,7 +1184,14 @@ int SiteArray::write_file(File* filePtr)
 	filePtr->file_put_short(gold_coin_count);
 	filePtr->file_put_short(std_raw_site_count);
 
+#ifdef __amigaos__
+	le_swap_dynarray( this, &LE_TABLE(Site) );	// little-endian in the file
+	int rc = DynArrayB::write_file( filePtr );
+	le_swap_dynarray( this, &LE_TABLE(Site) );
+	return rc;
+#else
 	return DynArrayB::write_file( filePtr );
+#endif
 }
 //--------- End of function SiteArray::write_file ---------------//
 
@@ -1098,7 +1206,13 @@ int SiteArray::read_file(File* filePtr)
 	gold_coin_count	 =	filePtr->file_get_short();
 	std_raw_site_count =	filePtr->file_get_short();
 
+#ifdef __amigaos__
+	int rc = DynArrayB::read_file( filePtr );
+	le_swap_dynarray( this, &LE_TABLE(Site) );	// little-endian in the file
+	return rc;
+#else
 	return DynArrayB::read_file( filePtr );
+#endif
 }
 //--------- End of function SiteArray::read_file ---------------//
 
@@ -1115,7 +1229,13 @@ int TownArray::write_file(File* filePtr)
 
 	filePtr->file_put_short( size()  );  // no. of towns in town_array
 	filePtr->file_put_short( selected_recno );
+#ifdef __amigaos__
+	le_swap32_array( race_wander_pop_array, MAX_RACE );	// little-endian in the file
 	filePtr->file_write( race_wander_pop_array, sizeof(race_wander_pop_array) );
+	le_swap32_array( race_wander_pop_array, MAX_RACE );
+#else
+	filePtr->file_write( race_wander_pop_array, sizeof(race_wander_pop_array) );
+#endif
 
 	filePtr->file_put_short( Town::if_town_recno );
 
@@ -1139,8 +1259,17 @@ int TownArray::write_file(File* filePtr)
 
 			filePtr->file_put_short(1);      // the town exists
 
+#ifdef __amigaos__
+         // little-endian in the file
+         le_swap_table_part( townPtr, LE_TABLE(Town), 0, sizeof(Town) - Town::SIZEOF_NONSAVED_ELEMENTS );
+         int rc = filePtr->file_write( townPtr, sizeof(Town) - Town::SIZEOF_NONSAVED_ELEMENTS );
+         le_swap_table_part( townPtr, LE_TABLE(Town), 0, sizeof(Town) - Town::SIZEOF_NONSAVED_ELEMENTS );
+         if( !rc )
+            return 0;
+#else
          if( !filePtr->file_write( townPtr, sizeof(Town) - Town::SIZEOF_NONSAVED_ELEMENTS ) )
             return 0;
+#endif
       }
    }
 
@@ -1170,6 +1299,9 @@ int TownArray::read_file(File* filePtr)
 	}
 	else
 		filePtr->file_read( race_wander_pop_array, sizeof(race_wander_pop_array) );
+#ifdef __amigaos__
+	le_swap32_array( race_wander_pop_array, MAX_RACE );	// little-endian in the file (zeros stay zeros)
+#endif
 
 	Town::if_town_recno = filePtr->file_get_short();
 
@@ -1193,6 +1325,9 @@ int TownArray::read_file(File* filePtr)
 					mem_del(oldTown);
 					return 0;
 				}
+#ifdef __amigaos__
+				LE_SWAP_STRUCT( Version_1_Town, oldTown, 1 );	// little-endian in the file
+#endif
 
 				oldTown->convert_to_version_2(townPtr);
 				mem_del(oldTown);
@@ -1201,6 +1336,10 @@ int TownArray::read_file(File* filePtr)
 			{
 				if( !filePtr->file_read( townPtr, sizeof(Town) - Town::SIZEOF_NONSAVED_ELEMENTS ) )
 					return 0;
+#ifdef __amigaos__
+				// little-endian in the file
+				le_swap_table_part( townPtr, LE_TABLE(Town), 0, sizeof(Town) - Town::SIZEOF_NONSAVED_ELEMENTS );
+#endif
 			}
 
 			#ifdef DEBUG
@@ -1912,7 +2051,13 @@ int Nation::write_file(File* filePtr)
 
 	//----------- write AI Action Array ------------//
 
+#ifdef __amigaos__
+	le_swap_dynarray( &action_array, &LE_TABLE(ActionNode) );	// little-endian in the file
 	action_array.write_file(filePtr);
+	le_swap_dynarray( &action_array, &LE_TABLE(ActionNode) );
+#else
+	action_array.write_file(filePtr);
+#endif
 
 	//------ write AI info array ---------//
 
@@ -1943,7 +2088,13 @@ static void write_ai_info(File* filePtr, short* aiInfoArray, short aiInfoCount, 
 {
 	filePtr->file_put_short( aiInfoCount );
 	filePtr->file_put_short( aiInfoSize  );
+#ifdef __amigaos__
+	le_swap16_array( aiInfoArray, aiInfoCount );	// little-endian in the file
 	filePtr->file_write( aiInfoArray, sizeof(short) * aiInfoCount );
+	le_swap16_array( aiInfoArray, aiInfoCount );
+#else
+	filePtr->file_write( aiInfoArray, sizeof(short) * aiInfoCount );
+#endif
 }
 //----------- End of static function write_ai_info ---------//
 
@@ -1982,6 +2133,9 @@ int Nation::read_file(File* filePtr)
 	//-------------- read AI Action Array --------------//
 
 	action_array.read_file(filePtr);
+#ifdef __amigaos__
+	le_swap_dynarray( &action_array, &LE_TABLE(ActionNode) );	// little-endian in the file
+#endif
 
 	//------ write AI info array ---------//
 
@@ -2016,6 +2170,9 @@ static void read_ai_info(File* filePtr, short** aiInfoArrayPtr, short& aiInfoCou
 	*aiInfoArrayPtr = (short*) mem_add( aiInfoSize * sizeof(short) );
 
 	filePtr->file_read( *aiInfoArrayPtr, sizeof(short) * aiInfoCount );
+#ifdef __amigaos__
+	le_swap16_array( *aiInfoArrayPtr, aiInfoCount );	// little-endian in the file
+#endif
 }
 //----------- End of static function read_ai_info ---------//
 
@@ -2160,7 +2317,19 @@ int Tornado::read_file(File* filePtr)
 //
 int RebelArray::write_file(File* filePtr)
 {
+#ifdef __amigaos__
+	int i;
+	for( i=1 ; i<=size() ; i++ )		// little-endian in the file
+		if( get_ptr(i) )
+			LE_SWAP_STRUCT( Rebel, get_ptr(i), 1 );
+	int rc = write_ptr_array(filePtr, sizeof(Rebel));
+	for( i=1 ; i<=size() ; i++ )
+		if( get_ptr(i) )
+			LE_SWAP_STRUCT( Rebel, get_ptr(i), 1 );
+	return rc;
+#else
 	return write_ptr_array(filePtr, sizeof(Rebel));
+#endif
 }
 //--------- End of function RebelArray::write_file ---------------//
 
@@ -2169,7 +2338,15 @@ int RebelArray::write_file(File* filePtr)
 //
 int RebelArray::read_file(File* filePtr)
 {
+#ifdef __amigaos__
+	int rc = read_ptr_array(filePtr, sizeof(Rebel), create_rebel_func);
+	for( int i=1 ; i<=size() ; i++ )		// little-endian in the file
+		if( get_ptr(i) )
+			LE_SWAP_STRUCT( Rebel, get_ptr(i), 1 );
+	return rc;
+#else
 	return read_ptr_array(filePtr, sizeof(Rebel), create_rebel_func);
+#endif
 }
 //--------- End of function RebelArray::read_file ---------------//
 
@@ -2333,8 +2510,16 @@ int SnowGroundArray::write_file(File* filePtr)
 {
 	MSG(__FILE__":%d: file_write(this, ...);\n", __LINE__);
 
+#ifdef __amigaos__
+   LE_SWAP_STRUCT( SnowGroundArray, this, 1 );	// little-endian in the file
+   int rc = filePtr->file_write( this, sizeof(SnowGroundArray));
+   LE_SWAP_STRUCT( SnowGroundArray, this, 1 );
+   if( !rc )
+      return 0;
+#else
    if( !filePtr->file_write( this, sizeof(SnowGroundArray)) )
       return 0;
+#endif
 
    return 1;
 }
@@ -2349,6 +2534,9 @@ int SnowGroundArray::read_file(File* filePtr)
 
    if( !filePtr->file_read( this, sizeof(SnowGroundArray)) )
       return 0;
+#ifdef __amigaos__
+   LE_SWAP_STRUCT( SnowGroundArray, this, 1 );	// little-endian in the file
+#endif
 
    return 1;
 }
@@ -2378,15 +2566,31 @@ int RegionArray::write_file(File* filePtr)
 										 REGION_ARRAY_RECORD_SIZE))
 		return 0;
 
+#ifdef __amigaos__
+	LE_SWAP_STRUCT( RegionInfo, region_info_array, region_info_count );	// little-endian in the file
+	int rc = filePtr->file_write( region_info_array, sizeof(RegionInfo)*region_info_count );
+	LE_SWAP_STRUCT( RegionInfo, region_info_array, region_info_count );
+	if( !rc )
+		return 0;
+#else
 	if( !filePtr->file_write( region_info_array, sizeof(RegionInfo)*region_info_count ) )
 		return 0;
+#endif
 
 	//-------- write RegionStat ----------//
 
 	filePtr->file_put_short( region_stat_count );
 
+#ifdef __amigaos__
+	LE_SWAP_STRUCT( RegionStat, region_stat_array, region_stat_count );	// little-endian in the file
+	rc = filePtr->file_write( region_stat_array, sizeof(RegionStat)*region_stat_count );
+	LE_SWAP_STRUCT( RegionStat, region_stat_array, region_stat_count );
+	if( !rc )
+		return 0;
+#else
 	if( !filePtr->file_write( region_stat_array, sizeof(RegionStat)*region_stat_count ) )
 		return 0;
+#endif
 
 	//--------- write connection bits ----------//
 
@@ -2419,6 +2623,9 @@ int RegionArray::read_file(File* filePtr)
 
    if( !filePtr->file_read( region_info_array, sizeof(RegionInfo)*region_info_count))
       return 0;
+#ifdef __amigaos__
+   LE_SWAP_STRUCT( RegionInfo, region_info_array, region_info_count );	// little-endian in the file
+#endif
 
 	//-------- read RegionStat ----------//
 
@@ -2428,6 +2635,9 @@ int RegionArray::read_file(File* filePtr)
 
 	if( !filePtr->file_read( region_stat_array, sizeof(RegionStat)*region_stat_count ) )
 		return 0;
+#ifdef __amigaos__
+	LE_SWAP_STRUCT( RegionStat, region_stat_array, region_stat_count );	// little-endian in the file
+#endif
 
 	//--------- read connection bits ----------//
 
@@ -2464,7 +2674,14 @@ int NewsArray::write_file(File* filePtr)
 
    //---------- save news data -----------//
 
+#ifdef __amigaos__
+   le_swap_dynarray( this, &LE_TABLE(News) );	// little-endian in the file
+   int rc = DynArray::write_file(filePtr);
+   le_swap_dynarray( this, &LE_TABLE(News) );
+   return rc;
+#else
    return DynArray::write_file(filePtr);
+#endif
 }
 //--------- End of function NewsArray::write_file ---------------//
 
@@ -2482,7 +2699,13 @@ int NewsArray::read_file(File* filePtr)
 
    //---------- read news data -----------//
 
+#ifdef __amigaos__
+   int rc = DynArray::read_file(filePtr);
+   le_swap_dynarray( this, &LE_TABLE(News) );	// little-endian in the file
+   return rc;
+#else
    return DynArray::read_file(filePtr);
+#endif
 }
 //--------- End of function NewsArray::read_file ---------------//
 /* vim:set ts=3 sw=3: */

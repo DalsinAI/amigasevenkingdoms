@@ -37,6 +37,10 @@ DBGLOG_DEFAULT_CHANNEL(Vga);
 
 static void init_dpi();
 static int init_window_flags();
+#ifdef __amigaos__
+extern "C" void amiga_screens_snapshot(void);
+extern "C" void amiga_screens_close_leftovers(void);
+#endif
 static void init_window_size();
 
 //------ Define static class member vars ---------//
@@ -85,6 +89,9 @@ int Vga::init()
    mouse_mode = MOUSE_INPUT_ABS;
    boundary_set = 0;
 
+#ifdef __amigaos__
+   amiga_screens_snapshot();	// see amiga/amiga_screens.c
+#endif
    if (SDL_Init(SDL_INIT_VIDEO))
       return 0;
 
@@ -119,7 +126,14 @@ int Vga::init()
 
    SDL_WarpMouseGlobal(mouse_x, mouse_y); // warp to initialize mouse by event queue
 
+#ifdef __amigaos__
+   // OpenGPU's SDL 2 can report a 24-bit RGB window (SDL_PIXELFORMAT_RGB24,
+   // an array type, not a packed one); the renderer takes a 32-bit XRGB
+   // texture whatever the screen is and converts it itself.
+   Uint32 window_pixel_format = SDL_PIXELFORMAT_RGB888;
+#else
    Uint32 window_pixel_format = SDL_GetWindowPixelFormat(window);
+#endif
    if (window_pixel_format == SDL_PIXELFORMAT_UNKNOWN)
    {
       ERR("Unknown pixel format: %s\n", SDL_GetError());
@@ -218,6 +232,9 @@ void Vga::deinit()
    window = NULL;
 
    SDL_Quit();
+#ifdef __amigaos__
+   amiga_screens_close_leftovers();	// what SDL2.module leaves open
+#endif
 }
 //-------- End of function Vga::deinit ----------//
 
@@ -798,7 +815,13 @@ void Vga::flip()
       return;
 
    cur_ticks = SDL_GetTicks();
+#ifdef __amigaos__
+   // Each frame shown is 800x600 pixels turned to the screen's depth and
+   // copied: on a 68040, at most 25 frames a second leave time to the game.
+   if (cur_ticks > ticks + 40 || cur_ticks < ticks) {
+#else
    if (cur_ticks > ticks + 17 || cur_ticks < ticks) {
+#endif
       ticks = cur_ticks;
       SDL_BlitSurface(vga_front.surface, NULL, target, NULL);
       SDL_UpdateTexture(texture, NULL, target->pixels, target->pitch);

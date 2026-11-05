@@ -30,6 +30,9 @@
 #include <OINFO.h>
 #include <OPLANT.h>
 #include <OCONFIG.h>
+#ifdef __amigaos__
+#include <amiga_le.h>
+#endif
 
 //---------- #define constant ------------//
 
@@ -205,10 +208,21 @@ void PlantRes::load_plant_bitmap()
 		plantBitmap->size = misc.atoi( plantBitmapRec->size, plantBitmapRec->SIZE_LEN );
 
 		memcpy( &bitmapOffset, plantBitmapRec->bitmap_ptr, sizeof(uint32_t) );
+#ifdef __amigaos__
+		LE_SWAP(bitmapOffset);	// little-endian in the database
+#endif
 
 		plantBitmap->bitmap_ptr 	= res_bitmap.read_imported(bitmapOffset);
+#ifdef __amigaos__
+		plantBitmap->bitmap_width  = le_get16(plantBitmap->bitmap_ptr);
+#else
 		plantBitmap->bitmap_width  = *((short*)plantBitmap->bitmap_ptr);
+#endif
+#ifdef __amigaos__
+		plantBitmap->bitmap_height = le_get16((char*)(plantBitmap->bitmap_ptr)+2);
+#else
 		plantBitmap->bitmap_height = *(((short*)plantBitmap->bitmap_ptr)+1);
+#endif
 
 		plantBitmap->offset_x = misc.atoi( plantBitmapRec->offset_x, plantBitmapRec->OFFSET_LEN );
 		plantBitmap->offset_y = misc.atoi( plantBitmapRec->offset_y, plantBitmapRec->OFFSET_LEN );

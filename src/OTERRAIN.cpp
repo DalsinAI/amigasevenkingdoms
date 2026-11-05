@@ -29,6 +29,9 @@
 #include <OWORLD.h>
 #include <OTERRAIN.h>
 #include <OCONFIG.h>
+#ifdef __amigaos__
+#include <amiga_le.h>
+#endif
 
 //---------- #define constant ------------//
 
@@ -413,6 +416,9 @@ void TerrainRes::load_info()
 		//---- get the bitmap pointer of the terrain icon in res_icon ----//
 
 		memcpy( &bitmapOffset, terrainRec->bitmap_ptr, sizeof(uint32_t) );
+#ifdef __amigaos__
+		LE_SWAP(bitmapOffset);	// little-endian in the database
+#endif
 
 		terrainInfo->bitmap_ptr = res_bitmap.read_imported(bitmapOffset);
 
@@ -810,6 +816,9 @@ void TerrainRes::load_anim_info()
 		terrainAnimRec = *(TerrainAnimRec *)(dbTerAnim->read(i+1));
 		
 		memcpy( &bitmapOffset, terrainAnimRec.bitmap_ptr, sizeof(uint32_t) );
+#ifdef __amigaos__
+		LE_SWAP(bitmapOffset);	// little-endian in the database
+#endif
 		bitmapPtr = anm_bitmap.read_imported(bitmapOffset);
 
 		if( memcmp(terrainAnimRec.base_file, lastAnimRec.base_file, terrainAnimRec.FILE_NAME_LEN))

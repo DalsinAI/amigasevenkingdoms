@@ -1263,6 +1263,12 @@ int misc_mkdir(char *path)
    return !CreateDirectory(path, NULL) ?
        GetLastError() == ERROR_ALREADY_EXISTS : 1;
 #else
+#ifdef __amigaos__
+   // a drawer that is there already will do, whatever errno libnix gives
+   struct stat st;
+   if( stat(path, &st) == 0 && S_ISDIR(st.st_mode) )
+      return 1;
+#endif
    return mkdir(path, 0777) == -1 ? errno == EEXIST : 1;
 #endif
 }

@@ -28,6 +28,9 @@
 #include <ONATION.h>
 #include <OFIRMRES.h>
 #include "gettext.h"
+#ifdef __amigaos__
+#include <amiga_le.h>
+#endif
 
 //---------- #define constant ------------//
 
@@ -127,10 +130,21 @@ void FirmRes::load_firm_bitmap()
 		firmBitmap    = firm_bitmap_array+i;
 
 		memcpy( &bitmapOffset, firmBitmapRec->bitmap_ptr, sizeof(uint32_t) );
+#ifdef __amigaos__
+		LE_SWAP(bitmapOffset);	// little-endian in the database
+#endif
 
 		firmBitmap->bitmap_ptr = res_bitmap.read_imported(bitmapOffset);
+#ifdef __amigaos__
+		firmBitmap->width  	  = le_get16(firmBitmap->bitmap_ptr);
+#else
 		firmBitmap->width  	  = *((short*)firmBitmap->bitmap_ptr);
+#endif
+#ifdef __amigaos__
+		firmBitmap->height 	  = le_get16((char*)(firmBitmap->bitmap_ptr)+2);
+#else
 		firmBitmap->height 	  = *(((short*)firmBitmap->bitmap_ptr)+1);
+#endif
 
 		firmBitmap->offset_x = misc.atoi( firmBitmapRec->offset_x, firmBitmapRec->OFFSET_LEN );
 		firmBitmap->offset_y = misc.atoi( firmBitmapRec->offset_y, firmBitmapRec->OFFSET_LEN );

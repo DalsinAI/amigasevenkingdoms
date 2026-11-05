@@ -31,6 +31,9 @@
 #include <OTERRAIN.h>
 #include <OCONFIG.h>
 #include <string.h>
+#ifdef __amigaos__
+#include <amiga_le.h>
+#endif
 
 // ---------- Define constant ------------//
 //#define ROCK_DB        "ROCK"
@@ -217,6 +220,9 @@ void RockRes::load_bitmap_info()
 
 		uint32_t bitmapOffset;
 		memcpy( &bitmapOffset, rockBitmapRec->bitmap_ptr, sizeof(uint32_t) );
+#ifdef __amigaos__
+		LE_SWAP(bitmapOffset);	// little-endian in the database
+#endif
 		rockBitmapInfo->bitmap_ptr = res_bitmap.read_imported(bitmapOffset);
 	}
 }

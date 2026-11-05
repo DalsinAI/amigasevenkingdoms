@@ -28,6 +28,9 @@
 #include <ORACERES.h>
 #include <locale.h>
 #include <gettext.h>
+#ifdef __amigaos__
+#include <amiga_le.h>
+#endif
 
 //---------- #define constant ------------//
 
@@ -117,6 +120,9 @@ void RaceRes::load_race_info()
 		misc.rtrim_fld( raceInfo->adjective, raceRec->adjective, raceRec->ADJECTIVE_LEN );
 
 		memcpy( &bitmapOffset, raceRec->icon_bitmap_ptr, sizeof(uint32_t) );
+#ifdef __amigaos__
+		LE_SWAP(bitmapOffset);	// little-endian in the database
+#endif
 
 		raceInfo->icon_bitmap_ptr = res_bitmap.read_imported(bitmapOffset);
 

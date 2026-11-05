@@ -527,12 +527,20 @@ int Sys::set_config_dir()
       strcpy(dir_config, home);
       strcat(dir_config, PATH_DELIM);
    }
+#ifdef __amigaos__
+   else
+   {
+      // settings, saved games and the hall of fame beside the program
+      strcpy(dir_config, "PROGDIR:Saves" PATH_DELIM);
+   }
+#else
    else
    {
       home = SDL_GetPrefPath(CONFIG_ORGANIZATION_NAME, CONFIG_APPLICATION_NAME);
       strcpy(dir_config, home);
       SDL_free(home);
    }
+#endif
 
    MSG("Game config dir path: %s\n", dir_config);
 

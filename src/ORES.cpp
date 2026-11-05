@@ -26,6 +26,9 @@
 #include <ALL.h>
 #include <OSYS.h>
 #include <ORES.h>
+#ifdef __amigaos__
+#include <amiga_le.h>
+#endif
 
 //------------ Format of RES file -------------//
 //
@@ -83,6 +86,9 @@ void Resource::init(char* resName, int readAll, int useCommonBuf)
    // rec_count+1 is the last index pointer for calculating last record size
 
    file_read( index_buf, sizeof(uint32_t) * (rec_count+1) );
+#ifdef __amigaos__
+   le_swap32_array( index_buf, rec_count+1 );	// file offsets, little-endian
+#endif
 
    //---------- Read in record data -------------//
 

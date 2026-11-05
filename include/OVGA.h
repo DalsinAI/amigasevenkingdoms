@@ -28,6 +28,9 @@
 #include <OVGABUF.h>
 #include <COLOR.h>
 #include <SDL.h>
+#ifdef __amigaos__
+#include <amiga_le.h>
+#endif
 
 //----------- define constants ----------//
 
@@ -45,8 +48,16 @@
 
 //-------- Define macro functions ---------//
 
+#ifdef __amigaos__
+#define get_bitmap_width(bitmapPtr)  (le_get16(bitmapPtr))
+#else
 #define get_bitmap_width(bitmapPtr)  (*(short*)bitmapPtr)
+#endif
+#ifdef __amigaos__
+#define get_bitmap_height(bitmapPtr) (le_get16((char*)(bitmapPtr)+2))
+#else
 #define get_bitmap_height(bitmapPtr) (*((short*)bitmapPtr+1))
+#endif
 
 //-------- Define modes --------//
 

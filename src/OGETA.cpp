@@ -29,6 +29,9 @@
 #include <KEY.h>
 #include <OSYS.h>
 #include <COLCODE.h>
+#ifdef __amigaos__
+#include <amiga_le.h>
+#endif
 
 #define HIDE_CHAR '*'
 
@@ -285,16 +288,32 @@ void GetA::paint(int paintCursor)
 	char *bitmap = sys.common_data_buf;
 	err_when( 2*sizeof(short) + textWidth * textHeight > COMMON_DATA_BUF_SIZE );
 
+#ifdef __amigaos__
+	le_put16(bitmap, textWidth);
+#else
 	*(short *)bitmap = textWidth;
+#endif
 	bitmap += sizeof(short);
+#ifdef __amigaos__
+	le_put16(bitmap, textHeight);
+#else
 	*(short *)bitmap = textHeight;
+#endif
 	bitmap += sizeof(short);
 
 	memset( bitmap, TRANSPARENT_CODE, textWidth * textHeight );
 	if( back_ground_bitmap && !Vga::use_back_buf )
 	{
+#ifdef __amigaos__
+		short backGroundWidth = le_get16(back_ground_bitmap);
+#else
 		short backGroundWidth = *(short *)back_ground_bitmap;
+#endif
+#ifdef __amigaos__
+		short backGroundHeight = le_get16((char*)(back_ground_bitmap)+2);
+#else
 		short backGroundHeight = *(1+(short *)back_ground_bitmap);
+#endif
 		// fill backGround
 		switch(align_flag)
 		{
@@ -354,8 +373,16 @@ void GetA::paint(int paintCursor)
 			}
 			else
 			{
+#ifdef __amigaos__
+				short backGroundWidth = le_get16(back_ground_bitmap);
+#else
 				short backGroundWidth = *(short *)back_ground_bitmap;
+#endif
+#ifdef __amigaos__
+				short backGroundHeight = le_get16((char*)(back_ground_bitmap)+2);
+#else
 				short backGroundHeight = *(1+(short *)back_ground_bitmap);
+#endif
 				if( textWidth < backGroundWidth && x+textWidth <= x_limit )		// fill right
 					vga_front.put_bitmap_area(x, y, back_ground_bitmap,
 					textWidth, 0, MIN(x_limit-x, backGroundWidth-1), backGroundHeight-1 );
@@ -382,8 +409,16 @@ void GetA::paint(int paintCursor)
 			else
 			{
 				int l = x + (x_limit - x + 1 - textWidth ) / 2;
+#ifdef __amigaos__
+				short backGroundWidth = le_get16(back_ground_bitmap);
+#else
 				short backGroundWidth = *(short *)back_ground_bitmap;
+#endif
+#ifdef __amigaos__
+				short backGroundHeight = le_get16((char*)(back_ground_bitmap)+2);
+#else
 				short backGroundHeight = *(1+(short *)back_ground_bitmap);
+#endif
 				if( x < l && l-x <= backGroundWidth)
 				{
 					vga_front.put_bitmap_area(x, y, back_ground_bitmap, 
@@ -410,8 +445,16 @@ void GetA::paint(int paintCursor)
 			}
 			else
 			{
+#ifdef __amigaos__
+				short backGroundWidth = le_get16(back_ground_bitmap);
+#else
 				short backGroundWidth = *(short *)back_ground_bitmap;
+#endif
+#ifdef __amigaos__
+				short backGroundHeight = le_get16((char*)(back_ground_bitmap)+2);
+#else
 				short backGroundHeight = *(1+(short *)back_ground_bitmap);
+#endif
 				int l = x_limit - textWidth + 1;
 				if( x < l )
 					vga_front.put_bitmap_area(0, 0, back_ground_bitmap,

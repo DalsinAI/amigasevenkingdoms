@@ -25,6 +25,9 @@
 
 #include <ALL.h>
 #include <ODB.h>
+#ifdef __amigaos__
+#include <amiga_le.h>
+#endif
 
 
 //-------- Begin of function Database constructor ------//
@@ -72,6 +75,11 @@ void Database::open( const char* fileName, int bufferAll )
 
    file_open(fileName);
    file_read( &dbf_header, sizeof(DbfHeader) );
+#ifdef __amigaos__
+   LE_SWAP(dbf_header.last_rec);	// the header is little-endian
+   LE_SWAP(dbf_header.data_offset);
+   LE_SWAP(dbf_header.rec_size);
+#endif
 
    //..........................................//
 
@@ -106,6 +114,11 @@ void Database::open_from_buf(char* dataPtr)
    //------- set data pointers ----------//
 
    memcpy( &dbf_header, dataPtr, sizeof(DbfHeader) );
+#ifdef __amigaos__
+   LE_SWAP(dbf_header.last_rec);	// the header is little-endian
+   LE_SWAP(dbf_header.data_offset);
+   LE_SWAP(dbf_header.rec_size);
+#endif
 
    dbf_buf = dataPtr + 1 + dbf_header.data_offset;
 

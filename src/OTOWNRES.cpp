@@ -27,6 +27,9 @@
 #include <OIMGRES.h>
 #include <ORACERES.h>
 #include <OTOWNRES.h>
+#ifdef __amigaos__
+#include <amiga_le.h>
+#endif
 
 //---------- define constant ------------//
 
@@ -242,10 +245,21 @@ void TownRes::load_town_build()
 		townBuild->race_id = misc.atoi(townBuildRec->race_id, TownBuildRec::RACE_ID_LEN);
 
 		memcpy( &bitmapOffset, townBuildRec->bitmap_ptr, sizeof(uint32_t) );
+#ifdef __amigaos__
+		LE_SWAP(bitmapOffset);	// little-endian in the database
+#endif
 
 		townBuild->bitmap_ptr    = res_bitmap.read_imported(bitmapOffset);
+#ifdef __amigaos__
+		townBuild->bitmap_width  = le_get16(townBuild->bitmap_ptr);
+#else
 		townBuild->bitmap_width  = *((short*)townBuild->bitmap_ptr);
+#endif
+#ifdef __amigaos__
+		townBuild->bitmap_height = le_get16((char*)(townBuild->bitmap_ptr)+2);
+#else
 		townBuild->bitmap_height = *(((short*)townBuild->bitmap_ptr)+1);
+#endif
 	}
 }
 //--------- End of function TownRes::load_town_build ---------//

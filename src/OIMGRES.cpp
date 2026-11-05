@@ -27,6 +27,9 @@
 #include <OVGA.h>
 #include <OMOUSE.h>
 #include <OIMGRES.h>
+#ifdef __amigaos__
+#include <amiga_le.h>
+#endif
 
 
 //--------- Format of RES file ------------//
@@ -71,7 +74,11 @@ void ImageRes::put_front(int x, int y, const char* imageName, int compressFlag)
 	if(!bitmapPtr)
 		return;
 
+#ifdef __amigaos__
+	mouse.hide_area( x, y, x+le_get16(bitmapPtr)-1, y+le_get16((char*)(bitmapPtr)+2)-1 );
+#else
 	mouse.hide_area( x, y, x+*((short*)bitmapPtr)-1, y+*(((short*)bitmapPtr)+1)-1 );
+#endif
 
 	if( compressFlag )
 		vga_front.put_bitmap_trans_decompress( x, y, bitmapPtr );
@@ -119,7 +126,11 @@ void ImageRes::put_front(int x, int y, int bitmapId, int compressFlag)
 	if( !bitmapPtr )
 		return;
 
+#ifdef __amigaos__
+	mouse.hide_area( x, y, x+le_get16(bitmapPtr)-1, y+le_get16((char*)(bitmapPtr)+2)-1 );
+#else
 	mouse.hide_area( x, y, x+*((short*)bitmapPtr)-1, y+*(((short*)bitmapPtr)+1)-1 );
+#endif
 
 	if( compressFlag )
 		vga_front.put_bitmap_trans_decompress( x, y, bitmapPtr );
@@ -165,7 +176,11 @@ void ImageRes::put_join(int x, int y, const char* imageName)
 	if( !bitmapPtr )
 		return;
 
+#ifdef __amigaos__
+	mouse.hide_area( x, y, x+le_get16(bitmapPtr)-1, y+le_get16((char*)(bitmapPtr)+2)-1 );
+#else
 	mouse.hide_area( x, y, x+*((short*)bitmapPtr)-1, y+*(((short*)bitmapPtr)+1)-1 );
+#endif
 
 	if( bitmapPtr )
 		IMGjoinTrans( vga_front.buf_ptr(), vga_front.buf_pitch(), 

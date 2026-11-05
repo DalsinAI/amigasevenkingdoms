@@ -29,6 +29,9 @@
 #include <OSPRTRES.h>
 #include <OUNITRES.h>
 #include "gettext.h"
+#ifdef __amigaos__
+#include <amiga_le.h>
+#endif
 
 #ifdef NO_DEBUG_UNIT
 #undef err_when
@@ -186,11 +189,17 @@ void UnitRes::load_info()
 		unitInfo->guard_combat_level = misc.atoi(unitRec->guard_combat_level, unitRec->UNIT_PARA_LEN);
 
 		memcpy( &bitmapOffset, unitRec->large_icon_ptr, sizeof(uint32_t) );
+#ifdef __amigaos__
+		LE_SWAP(bitmapOffset);	// little-endian in the database
+#endif
 		unitInfo->soldier_icon_ptr = res_large_icon.read_imported(bitmapOffset);
 
 		if( unitRec->general_icon_file_name[0] != '\0' && unitRec->general_icon_file_name[0] != ' ')
 		{
 			memcpy( &bitmapOffset, unitRec->general_icon_ptr, sizeof(uint32_t) );
+#ifdef __amigaos__
+			LE_SWAP(bitmapOffset);	// little-endian in the database
+#endif
 			unitInfo->general_icon_ptr = res_general_icon.read_imported(bitmapOffset);
 		}
 		else
@@ -201,6 +210,9 @@ void UnitRes::load_info()
 		if( unitRec->king_icon_file_name[0] != '\0' && unitRec->king_icon_file_name[0] != ' ')
 		{
 			memcpy( &bitmapOffset, unitRec->king_icon_ptr, sizeof(uint32_t) );
+#ifdef __amigaos__
+			LE_SWAP(bitmapOffset);	// little-endian in the database
+#endif
 			unitInfo->king_icon_ptr = res_king_icon.read_imported(bitmapOffset);
 		}
 		else
@@ -210,11 +222,17 @@ void UnitRes::load_info()
 
 		// ###### begin Gilbert 17/10 ######//
 		memcpy( &bitmapOffset, unitRec->small_icon_ptr, sizeof(uint32_t) );
+#ifdef __amigaos__
+		LE_SWAP(bitmapOffset);	// little-endian in the database
+#endif
 		unitInfo->soldier_small_icon_ptr = res_small_icon.read_imported(bitmapOffset);
 
 		if( unitRec->general_small_icon_file_name[0] != '\0' && unitRec->general_small_icon_file_name[0] != ' ')
 		{
 			memcpy( &bitmapOffset, unitRec->general_small_icon_ptr, sizeof(uint32_t) );
+#ifdef __amigaos__
+			LE_SWAP(bitmapOffset);	// little-endian in the database
+#endif
 			unitInfo->general_small_icon_ptr = res_general_small_icon.read_imported(bitmapOffset);
 		}
 		else
@@ -225,6 +243,9 @@ void UnitRes::load_info()
 		if( unitRec->king_small_icon_file_name[0] != '\0' && unitRec->king_small_icon_file_name[0] != ' ')
 		{
 			memcpy( &bitmapOffset, unitRec->king_small_icon_ptr, sizeof(uint32_t) );
+#ifdef __amigaos__
+			LE_SWAP(bitmapOffset);	// little-endian in the database
+#endif
 			unitInfo->king_small_icon_ptr = res_king_small_icon.read_imported(bitmapOffset);
 		}
 		else

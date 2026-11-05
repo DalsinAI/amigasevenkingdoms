@@ -58,6 +58,9 @@
 #include <OSaveGameArray.h>
 #include <dbglog.h>
 #include <file_io_visitor.h>
+#ifdef __amigaos__
+#include <amiga_le.h>
+#endif
 
 using namespace FileIOVisitor;
 
@@ -378,6 +381,9 @@ int GameFile::write_file_2(File* filePtr)
 //
 int GameFile::write_file_3(File* filePtr)
 {
+#ifdef __amigaos__
+	int rc;
+#endif
 	write_book_mark( filePtr, BOOK_MARK+201 );
 
 	if( !unit_array.write_file(filePtr) )
@@ -440,19 +446,43 @@ int GameFile::write_file_3(File* filePtr)
 
 	write_book_mark( filePtr, BOOK_MARK+213 );
 
+#ifdef __amigaos__
+	le_swap_dynarray( &rock_array, &LE_TABLE(Rock) );	// little-endian in the file
+	rc = rock_array.write_file(filePtr);
+	le_swap_dynarray( &rock_array, &LE_TABLE(Rock) );
+	if( !rc )
+		return 0;
+#else
 	if( !rock_array.write_file(filePtr) )
 		return 0;
+#endif
 
 	write_book_mark( filePtr, BOOK_MARK+214 );
 
+#ifdef __amigaos__
+	le_swap_dynarray( &dirt_array, &LE_TABLE(Rock) );	// little-endian in the file
+	rc = dirt_array.write_file(filePtr);
+	le_swap_dynarray( &dirt_array, &LE_TABLE(Rock) );
+	if( !rc )
+		return 0;
+#else
 	if( !dirt_array.write_file(filePtr) )
 		return 0;
+#endif
 
 	// ##### begin Gilbert 2/10 ######//
 	write_book_mark( filePtr, BOOK_MARK+215 );
 
+#ifdef __amigaos__
+	le_swap_dynarray( &firm_die_array, &LE_TABLE(FirmDie) );	// little-endian in the file
+	rc = firm_die_array.write_file(filePtr);
+	le_swap_dynarray( &firm_die_array, &LE_TABLE(FirmDie) );
+	if( !rc )
+		return 0;
+#else
 	if( !firm_die_array.write_file(filePtr) )
 		return 0;
+#endif
 	// ##### end Gilbert 2/10 ######//
 
 	return 1;
@@ -702,18 +732,27 @@ int GameFile::read_file_3(File* filePtr)
 
 	if( !rock_array.read_file(filePtr) )
 		return 0;
+#ifdef __amigaos__
+	le_swap_dynarray( &rock_array, &LE_TABLE(Rock) );	// little-endian in the file
+#endif
 
 	if( !read_book_mark( filePtr, BOOK_MARK+214 ) )
 		return 0;
 
 	if( !dirt_array.read_file(filePtr) )
 		return 0;
+#ifdef __amigaos__
+	le_swap_dynarray( &dirt_array, &LE_TABLE(Rock) );	// little-endian in the file
+#endif
 
 	// ##### begin Gilbert 2/10 ######//
 	if( !read_book_mark( filePtr, BOOK_MARK+215 ) )
 
 	if( !firm_die_array.read_file(filePtr) )
 		return 0;
+#ifdef __amigaos__
+	le_swap_dynarray( &firm_die_array, &LE_TABLE(FirmDie) );	// little-endian in the file
+#endif
 	// ##### end Gilbert 2/10 ######//
 
 	return 1;
@@ -806,11 +845,23 @@ int UnitRes::write_file(File* filePtr)
 		if( !filePtr->file_write( unitInfo->nation_tech_level_array, sizeof(unitInfo->nation_tech_level_array) ) )
 			return 0;
 
+#ifdef __amigaos__
+		// the counts are little-endian in the file
+		le_swap16_array( unitInfo->nation_unit_count_array, MAX_NATION );
+		le_swap16_array( unitInfo->nation_general_count_array, MAX_NATION );
+		int rc = filePtr->file_write( unitInfo->nation_unit_count_array, sizeof(unitInfo->nation_unit_count_array) )
+		      && filePtr->file_write( unitInfo->nation_general_count_array, sizeof(unitInfo->nation_general_count_array) );
+		le_swap16_array( unitInfo->nation_unit_count_array, MAX_NATION );
+		le_swap16_array( unitInfo->nation_general_count_array, MAX_NATION );
+		if( !rc )
+			return 0;
+#else
 		if( !filePtr->file_write( unitInfo->nation_unit_count_array, sizeof(unitInfo->nation_unit_count_array) ) )
 			return 0;
 
 		if( !filePtr->file_write( unitInfo->nation_general_count_array, sizeof(unitInfo->nation_general_count_array) ) )
 			return 0;
+#endif
 	}
 
 	return 1;
@@ -844,6 +895,10 @@ int UnitRes::read_file(File* filePtr)
 
 		if( !filePtr->file_read( unitInfo->nation_general_count_array, sizeof(unitInfo->nation_general_count_array) ) )
 			return 0;
+#ifdef __amigaos__
+		le_swap16_array( unitInfo->nation_unit_count_array, MAX_NATION );	// little-endian in the file
+		le_swap16_array( unitInfo->nation_general_count_array, MAX_NATION );
+#endif
 	}
 
 	return 1;
@@ -856,7 +911,14 @@ int UnitRes::read_file(File* filePtr)
 //
 int FirmRes::write_file(File* filePtr)
 {
+#ifdef __amigaos__
+	LE_SWAP_STRUCT( FirmInfo, firm_info_array, firm_count );	// little-endian in the file
+	int rc = filePtr->file_write( firm_info_array, firm_count * sizeof(FirmInfo) );
+	LE_SWAP_STRUCT( FirmInfo, firm_info_array, firm_count );
+	return rc;
+#else
 	return filePtr->file_write( firm_info_array, firm_count * sizeof(FirmInfo) );
+#endif
 }
 //--------- End of function FirmRes::write_file ---------------//
 
@@ -874,6 +936,9 @@ int FirmRes::read_file(File* filePtr)
 	memcpy( oldFirmInfoArray, firm_info_array, arraySize );
 
 	int rc = filePtr->file_read( firm_info_array, arraySize );
+#ifdef __amigaos__
+	LE_SWAP_STRUCT( FirmInfo, firm_info_array, firm_count );	// little-endian in the file
+#endif
 
 	for( int i=0 ; i<firm_count ; i++ )
 	{
@@ -925,11 +990,23 @@ int TownRes::read_file(File* filePtr)
 //
 int TechRes::write_file(File* filePtr)
 {
+#ifdef __amigaos__
+	// little-endian in the file
+	LE_SWAP_STRUCT( TechClass, tech_class_array, tech_class_count );
+	LE_SWAP_STRUCT( TechInfo, tech_info_array, tech_count );
+	int rc = filePtr->file_write( tech_class_array, tech_class_count * sizeof(TechClass) )
+	      && filePtr->file_write( tech_info_array, tech_count * sizeof(TechInfo) );
+	LE_SWAP_STRUCT( TechClass, tech_class_array, tech_class_count );
+	LE_SWAP_STRUCT( TechInfo, tech_info_array, tech_count );
+	if( !rc )
+		return 0;
+#else
 	if( !filePtr->file_write( tech_class_array, tech_class_count * sizeof(TechClass) ) )
 		return 0;
 
 	if( !filePtr->file_write( tech_info_array, tech_count * sizeof(TechInfo) ) )
 		return 0;
+#endif
 
 	return 1;
 }
@@ -942,11 +1019,17 @@ int TechRes::read_file(File* filePtr)
 {
 	if( !filePtr->file_read( tech_class_array, tech_class_count * sizeof(TechClass) ) )
 		return 0;
+#ifdef __amigaos__
+	LE_SWAP_STRUCT( TechClass, tech_class_array, tech_class_count );	// little-endian in the file
+#endif
 
 	if(!GameFile::read_file_same_version)
 	{
 		if(!filePtr->file_read( tech_info_array, VERSION_1_TECH_COUNT * sizeof(TechInfo) ) )
 			return 0;
+#ifdef __amigaos__
+		LE_SWAP_STRUCT( TechInfo, tech_info_array, VERSION_1_TECH_COUNT );	// little-endian in the file
+#endif
 
 		TechInfo *techInfoPtr = tech_info_array + VERSION_1_TECH_COUNT;
 		for(int i=VERSION_1_TECH_COUNT; i<tech_count; ++i, techInfoPtr++)
@@ -960,6 +1043,9 @@ int TechRes::read_file(File* filePtr)
 	{
 		if( !filePtr->file_read( tech_info_array, tech_count * sizeof(TechInfo) ) )
 			return 0;
+#ifdef __amigaos__
+		LE_SWAP_STRUCT( TechInfo, tech_info_array, tech_count );	// little-endian in the file
+#endif
 	}
 
 	return 1;
@@ -1019,8 +1105,16 @@ int TalkRes::write_file(File* filePtr)
 										 TALK_RES_RECORD_SIZE))
 		return 0;
 
+#ifdef __amigaos__
+	le_swap_dynarray( &talk_msg_array, &LE_TABLE(TalkMsg) );	// little-endian in the file
+	int rc = talk_msg_array.write_file(filePtr);
+	le_swap_dynarray( &talk_msg_array, &LE_TABLE(TalkMsg) );
+	if( !rc )
+		return 0;
+#else
 	if( !talk_msg_array.write_file(filePtr) )
 		return 0;
+#endif
 
 	return 1;
 }
@@ -1037,6 +1131,9 @@ int TalkRes::read_file(File* filePtr)
 
 	if( !talk_msg_array.read_file(filePtr) )
 		return 0;
+#ifdef __amigaos__
+	le_swap_dynarray( &talk_msg_array, &LE_TABLE(TalkMsg) );	// little-endian in the file
+#endif
 
 	this->choice_question = NULL;
 	this->choice_question_second_line = NULL;
@@ -1054,11 +1151,23 @@ int RawRes::write_file(File* filePtr)
 {
 	for( int i=0 ; i<MAX_RAW ; i++ )
 	{
+#ifdef __amigaos__
+		// firm recnos, little-endian in the file
+		le_swap_dynarray( &raw_info_array[i].raw_supply_firm_array, NULL );
+		le_swap_dynarray( &raw_info_array[i].product_supply_firm_array, NULL );
+		int rc = raw_info_array[i].raw_supply_firm_array.write_file(filePtr)
+		      && raw_info_array[i].product_supply_firm_array.write_file(filePtr);
+		le_swap_dynarray( &raw_info_array[i].raw_supply_firm_array, NULL );
+		le_swap_dynarray( &raw_info_array[i].product_supply_firm_array, NULL );
+		if( !rc )
+			return 0;
+#else
 		if( !raw_info_array[i].raw_supply_firm_array.write_file(filePtr) )
 			return 0;
 
 		if( !raw_info_array[i].product_supply_firm_array.write_file(filePtr) )
 			return 0;
+#endif
 	}
 
 	return 1;
@@ -1077,6 +1186,10 @@ int RawRes::read_file(File* filePtr)
 
 		if( !raw_info_array[i].product_supply_firm_array.read_file(filePtr) )
 			return 0;
+#ifdef __amigaos__
+		le_swap_dynarray( &raw_info_array[i].raw_supply_firm_array, NULL );	// little-endian in the file
+		le_swap_dynarray( &raw_info_array[i].product_supply_firm_array, NULL );
+#endif
 	}
 
 	return 1;
@@ -1089,7 +1202,14 @@ int RawRes::read_file(File* filePtr)
 //
 int GodRes::write_file(File* filePtr)
 {
+#ifdef __amigaos__
+	LE_SWAP_STRUCT( GodInfo, god_info_array, god_count );	// little-endian in the file
+	int rc = filePtr->file_write( god_info_array, sizeof(GodInfo) * god_count );
+	LE_SWAP_STRUCT( GodInfo, god_info_array, god_count );
+	return rc;
+#else
 	return filePtr->file_write( god_info_array, sizeof(GodInfo) * god_count );
+#endif
 }
 //--------- End of function GodRes::write_file ---------------//
 
@@ -1101,10 +1221,26 @@ int GodRes::read_file(File* filePtr)
 	if(!GameFile::read_file_same_version)
 	{
 		memset(god_info_array, 0, sizeof(god_info_array));
+#ifdef __amigaos__
+	{
+		int rc = filePtr->file_read( god_info_array, sizeof(GodInfo) * VERSION_1_GODRES_GOD_COUNT );
+		LE_SWAP_STRUCT( GodInfo, god_info_array, VERSION_1_GODRES_GOD_COUNT );	// little-endian in the file
+		return rc;
+	}
+#else
 		return filePtr->file_read( god_info_array, sizeof(GodInfo) * VERSION_1_GODRES_GOD_COUNT );
+#endif
 	}
 	else
+#ifdef __amigaos__
+	{
+		int rc = filePtr->file_read( god_info_array, sizeof(GodInfo) * god_count );
+		LE_SWAP_STRUCT( GodInfo, god_info_array, god_count );	// little-endian in the file
+		return rc;
+	}
+#else
 		return filePtr->file_read( god_info_array, sizeof(GodInfo) * god_count );
+#endif
 }
 //--------- End of function GodRes::read_file ---------------//
 
@@ -1114,7 +1250,14 @@ int GodRes::read_file(File* filePtr)
 //
 int MonsterRes::write_file(File* filePtr)
 {
+#ifdef __amigaos__
+	le_swap16_array( active_monster_array, MAX_ACTIVE_MONSTER );	// little-endian in the file
+	int rc = filePtr->file_write( active_monster_array, sizeof(active_monster_array) );
+	le_swap16_array( active_monster_array, MAX_ACTIVE_MONSTER );
+	return rc;
+#else
 	return filePtr->file_write( active_monster_array, sizeof(active_monster_array) );
+#endif
 }
 //--------- End of function MonsterRes::write_file ---------------//
 
@@ -1123,7 +1266,13 @@ int MonsterRes::write_file(File* filePtr)
 //
 int MonsterRes::read_file(File* filePtr)
 {
+#ifdef __amigaos__
+	int rc = filePtr->file_read( active_monster_array, sizeof(active_monster_array) );
+	le_swap16_array( active_monster_array, MAX_ACTIVE_MONSTER );	// little-endian in the file
+	return rc;
+#else
 	return filePtr->file_read( active_monster_array, sizeof(active_monster_array) );
+#endif
 }
 //--------- End of function MonsterRes::read_file ---------------//
 
@@ -1133,7 +1282,14 @@ int MonsterRes::read_file(File* filePtr)
 //
 int Game::write_file(File* filePtr)
 {
+#ifdef __amigaos__
+	LE_SWAP_STRUCT( Game, this, 1 );	// little-endian in the file
+	int rc = filePtr->file_write( this, sizeof(Game) );
+	LE_SWAP_STRUCT( Game, this, 1 );
+	return rc;
+#else
 	return filePtr->file_write( this, sizeof(Game) );
+#endif
 }
 //--------- End of function Game::write_file ---------------//
 
@@ -1143,7 +1299,13 @@ int Game::write_file(File* filePtr)
 int Game::read_file(File* filePtr)
 {
 	MSG(__FILE__":%d: file_read(this, ...);\n", __LINE__);
+#ifdef __amigaos__
+	int rc = filePtr->file_read( this, sizeof(Game) );
+	LE_SWAP_STRUCT( Game, this, 1 );	// little-endian in the file
+	return rc;
+#else
 	return filePtr->file_read( this, sizeof(Game) );
+#endif
 }
 //--------- End of function Game::read_file ---------------//
 
@@ -1291,7 +1453,14 @@ int Info::write_file(File* filePtr)
 
 	//---------- write the info data -----------//
 
+#ifdef __amigaos__
+	le_swap_table_part( this, LE_TABLE(Info), 0, writeSize );	// little-endian in the file
+	int rc = filePtr->file_write( this, writeSize );
+	le_swap_table_part( this, LE_TABLE(Info), 0, writeSize );
+	return rc;
+#else
 	return filePtr->file_write( this, writeSize );
+#endif
 }
 //--------- End of function Info::write_file ---------------//
 
@@ -1305,7 +1474,13 @@ int Info::read_file(File* filePtr)
 	//------- read the info data ----------//
 
 	MSG(__FILE__":%d: file_read(this, ...);\n", __LINE__);
+#ifdef __amigaos__
+	int rc = filePtr->file_read( this, readSize );
+	le_swap_table_part( this, LE_TABLE(Info), 0, readSize );	// little-endian in the file
+	return rc;
+#else
 	return filePtr->file_read( this, readSize );
+#endif
 }
 //--------- End of function Info::read_file ---------------//
 
@@ -1315,7 +1490,14 @@ int Info::read_file(File* filePtr)
 //
 int Power::write_file(File* filePtr)
 {
+#ifdef __amigaos__
+	LE_SWAP_STRUCT( Power, this, 1 );	// little-endian in the file
+	int rc = filePtr->file_write( this, sizeof(Power) );
+	LE_SWAP_STRUCT( Power, this, 1 );
+	return rc;
+#else
 	return filePtr->file_write( this, sizeof(Power) );
+#endif
 }
 //--------- End of function Power::write_file ---------------//
 
@@ -1325,7 +1507,13 @@ int Power::write_file(File* filePtr)
 int Power::read_file(File* filePtr)
 {
 	MSG(__FILE__":%d: file_read(this, ...);\n", __LINE__);
+#ifdef __amigaos__
+	int rc = filePtr->file_read( this, sizeof(Power) );
+	LE_SWAP_STRUCT( Power, this, 1 );	// little-endian in the file
+	return rc;
+#else
 	return filePtr->file_read( this, sizeof(Power) );
+#endif
 }
 //--------- End of function Power::read_file ---------------//
 
@@ -1375,7 +1563,14 @@ int Sys::read_file(File* filePtr)
 //
 int Weather::write_file(File* filePtr)
 {
+#ifdef __amigaos__
+	LE_SWAP_STRUCT( Weather, this, 1 );	// little-endian in the file
+	int rc = filePtr->file_write( this, sizeof(Weather) );
+	LE_SWAP_STRUCT( Weather, this, 1 );
+	return rc;
+#else
 	return filePtr->file_write( this, sizeof(Weather) );
+#endif
 }
 //--------- End of function Weather::write_file ---------------//
 
@@ -1385,7 +1580,13 @@ int Weather::write_file(File* filePtr)
 int Weather::read_file(File* filePtr)
 {
 	MSG(__FILE__":%d: file_read(this, ...);\n", __LINE__);
+#ifdef __amigaos__
+	int rc = filePtr->file_read( this, sizeof(Weather) );
+	LE_SWAP_STRUCT( Weather, this, 1 );	// little-endian in the file
+	return rc;
+#else
 	return filePtr->file_read( this, sizeof(Weather) );
+#endif
 }
 //--------- End of function Weather::read_file ---------------//
 
@@ -1395,7 +1596,14 @@ int Weather::read_file(File* filePtr)
 //
 int MagicWeather::write_file(File* filePtr)
 {
+#ifdef __amigaos__
+	LE_SWAP_STRUCT( MagicWeather, this, 1 );	// little-endian in the file
+	int rc = filePtr->file_write( this, sizeof(MagicWeather) );
+	LE_SWAP_STRUCT( MagicWeather, this, 1 );
+	return rc;
+#else
 	return filePtr->file_write( this, sizeof(MagicWeather) );
+#endif
 }
 //--------- End of function MagicWeahter::write_file ---------------//
 
@@ -1405,7 +1613,13 @@ int MagicWeather::write_file(File* filePtr)
 int MagicWeather::read_file(File* filePtr)
 {
 	MSG(__FILE__":%d: file_read(this, ...);\n", __LINE__);
+#ifdef __amigaos__
+	int rc = filePtr->file_read( this, sizeof(MagicWeather) );
+	LE_SWAP_STRUCT( MagicWeather, this, 1 );	// little-endian in the file
+	return rc;
+#else
 	return filePtr->file_read( this, sizeof(MagicWeather) );
+#endif
 }
 //--------- End of function MagicWeahter::read_file ---------------//
 
@@ -1417,8 +1631,16 @@ int World::write_file(File* filePtr)
 {
 	//--------- save map -------------//
 
+#ifdef __amigaos__
+	LE_SWAP_STRUCT( Location, loc_matrix, max_x_loc*max_y_loc );	// little-endian in the file
+	int rc = filePtr->file_write(loc_matrix, max_x_loc*max_y_loc*sizeof(Location) );
+	LE_SWAP_STRUCT( Location, loc_matrix, max_x_loc*max_y_loc );
+	if( !rc )
+		return 0;
+#else
 	if( !filePtr->file_write(loc_matrix, max_x_loc*max_y_loc*sizeof(Location) ) )
 		return 0;
+#endif
 
 	//--------- save vars -----------//
 
@@ -1461,6 +1683,9 @@ int World::read_file(File* filePtr)
 
 	if( !filePtr->file_read(loc_matrix, max_x_loc*max_y_loc*sizeof(Location) ) )
 		return 0;
+#ifdef __amigaos__
+	LE_SWAP_STRUCT( Location, loc_matrix, max_x_loc*max_y_loc );	// little-endian in the file
+#endif
 
 	assign_map();
 

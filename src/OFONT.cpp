@@ -38,6 +38,9 @@
 #include <OHELP.h>
 #include <LocaleRes.h>
 #include <OFONT.h>
+#ifdef __amigaos__
+#include <amiga_le.h>
+#endif
 
 //--------------------------------------------------------//
 // A font resource file is composed of three parts :
@@ -167,6 +170,13 @@ void Font::init(const char* fontName, int interCharSpace, int italicShift)
 	FontHeader fontHeader;
 
 	fontFile.file_read( &fontHeader, sizeof(FontHeader) );
+#ifdef __amigaos__
+	LE_SWAP(fontHeader.max_width);		// the font file is little-endian
+	LE_SWAP(fontHeader.max_height);
+	LE_SWAP(fontHeader.std_height);
+	LE_SWAP(fontHeader.first_char);
+	LE_SWAP(fontHeader.last_char);
+#endif
 
 	max_font_width  = fontHeader.max_width;
 	max_font_height = fontHeader.max_height;
@@ -184,6 +194,10 @@ void Font::init(const char* fontName, int interCharSpace, int italicShift)
 	font_info_array = (FontInfo*) mem_add( infoArraySize );
 
 	fontFile.file_read( font_info_array, infoArraySize );
+#ifdef __amigaos__
+	for( int i=0 ; i<last_char-first_char+1 ; i++ )
+		LE_SWAP(font_info_array[i].bitmap_offset);
+#endif
 
 	//------- process italic shift --------//
 

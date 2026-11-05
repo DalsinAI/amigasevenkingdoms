@@ -39,6 +39,9 @@
 #include <FilePath.h>
 
 #include <string.h> // for strncpy
+#ifdef __amigaos__
+#include <amiga_le.h>
+#endif
 
 #define HALL_OF_FAME_FILE_NAME  "HALLFAME.DAT"
 
@@ -94,6 +97,10 @@ int HallOfFame::read_hall_of_fame()
 
 	if( rc )
 		rc = file.file_read( hall_fame_array, sizeof(HallFameEntry) * HALL_FAME_NUM );
+#ifdef __amigaos__
+	if( rc )
+		LE_SWAP_STRUCT( HallFameEntry, hall_fame_array, HALL_FAME_NUM );	// little-endian in the file
+#endif
 
 	//------ read last saved game file name ------//
 
@@ -126,8 +133,17 @@ int HallOfFame::write_hall_of_fame()
 	// 1=allow the writing size and the read size to be different
 	//--------- Write Hall of Fame ----------//
 
+#ifdef __amigaos__
+	if( rc )
+	{
+		LE_SWAP_STRUCT( HallFameEntry, hall_fame_array, HALL_FAME_NUM );	// little-endian in the file
+		rc = file.file_write( hall_fame_array, sizeof(HallFameEntry) * HALL_FAME_NUM );
+		LE_SWAP_STRUCT( HallFameEntry, hall_fame_array, HALL_FAME_NUM );
+	}
+#else
 	if( rc )
 		rc = file.file_write( hall_fame_array, sizeof(HallFameEntry) * HALL_FAME_NUM );
+#endif
 
 	//------ write last saved game file name ------//
 

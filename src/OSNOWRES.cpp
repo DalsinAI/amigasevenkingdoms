@@ -28,6 +28,9 @@
 #include <OGAMESET.h>
 #include <OWORLD.h>
 #include <ALL.h>
+#ifdef __amigaos__
+#include <amiga_le.h>
+#endif
 
 
 // --------- define constant --------//
@@ -159,6 +162,9 @@ void SnowRes::load_info()
 
 		snowInfo->snow_map_id = i+1;
 		memcpy( &bitmapOffset, snowRec->bitmap_ptr, sizeof(uint32_t) );
+#ifdef __amigaos__
+		LE_SWAP(bitmapOffset);	// little-endian in the database
+#endif
 		snowInfo->bitmap_ptr	= res_bitmap.read_imported(bitmapOffset);
 		if( snowRec->offset_x[0] != '\0' && snowRec->offset_x[0] != ' ')
 			snowInfo->offset_x = (short) misc.atoi(snowRec->offset_x, snowRec->OFFSET_LEN);

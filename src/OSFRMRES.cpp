@@ -26,6 +26,9 @@
 #include <OSYS.h>
 #include <OGAMESET.h>
 #include <OSFRMRES.h>
+#ifdef __amigaos__
+#include <amiga_le.h>
+#endif
 
 //-------- define file name -----------//
 
@@ -89,6 +92,9 @@ void SpriteFrameRes::load_info()
 		spriteFrame->height = misc.atoi(frameRec->height, frameRec->HEIGHT_LEN);
 
 		memcpy( &spriteFrame->bitmap_offset, frameRec->bitmap_offset, sizeof(uint32_t) );
+#ifdef __amigaos__
+		LE_SWAP(spriteFrame->bitmap_offset);	// little-endian in the database
+#endif
 	}
 }
 //-------- End of function SpriteFrameRes::load_info ---------//

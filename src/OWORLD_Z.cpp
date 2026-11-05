@@ -62,6 +62,9 @@
 #include <OFIRMDIE.h>
 #include <OIMGRES.h>
 #include "gettext.h"
+#ifdef __amigaos__
+#include <amiga_le.h>
+#endif
 
 //--------- Define static vars -----------//
 
@@ -220,8 +223,16 @@ static void draw_unit_way_point_on_zoom_map()
 	ResultNode *resultNode1, *resultNode2;
 	// ##### begin Gilbert 12/11 #######//
 	char *chPtr = image_icon.get_ptr("WAYPOINT");
+#ifdef __amigaos__
+	short chOffsetX = - (le_get16(chPtr) / 2);
+#else
 	short chOffsetX = - (*(short *)chPtr / 2);
+#endif
+#ifdef __amigaos__
+	short chOffsetY = - (le_get16((char*)(chPtr)+2) / 2);
+#else
 	short chOffsetY = - (*(1+(short *)chPtr) / 2);
+#endif
 	// ##### end Gilbert 12/11 #######//
 
 	for(i=unit_array.size(); i>0; --i)
@@ -1028,9 +1039,17 @@ void ZoomMatrix::put_center_text(int x, int y, const char* str)
 	if( w * h + 2*sizeof(short) <= TEMP_BUFFER_SIZE )
 	{
 		char *bufferPtr = tempBuffer;
+#ifdef __amigaos__
+		le_put16(bufferPtr, w);
+#else
 		*(short *)bufferPtr = w;
+#endif
 		bufferPtr += sizeof(short);
+#ifdef __amigaos__
+		le_put16(bufferPtr, h);
+#else
 		*(short *)bufferPtr = h;
+#endif
 		bufferPtr += sizeof(short);
 		memset( bufferPtr, TRANSPARENT_CODE, w * h );
 		font_news.put_to_buffer(bufferPtr, w, 0, 0, str);
@@ -1930,8 +1949,16 @@ static int sort_display_function( const void *a, const void *b )
 //
 void ZoomMatrix::put_bitmap_clip(int x, int y, char* bitmapPtr, int compressedFlag)
 {
+#ifdef __amigaos__
+	int x2 = x + le_get16(bitmapPtr) 	  - 1;
+#else
 	int x2 = x + *((short*)bitmapPtr) 	  - 1;
+#endif
+#ifdef __amigaos__
+	int y2 = y + le_get16((char*)(bitmapPtr)+2) - 1;
+#else
 	int y2 = y + *(((short*)bitmapPtr)+1) - 1;
+#endif
 
 	if( x2 < ZOOM_X1 || y2 < ZOOM_Y1 || x > ZOOM_X2 || y > ZOOM_Y2 )
 		return;
@@ -1975,8 +2002,16 @@ void ZoomMatrix::put_bitmap_clip(int x, int y, char* bitmapPtr, int compressedFl
 //
 int ZoomMatrix::detect_bitmap_clip(int x, int y, char* bitmapPtr)
 {
+#ifdef __amigaos__
+	int x2 = x + le_get16(bitmapPtr) 	  - 1;
+#else
 	int x2 = x + *((short*)bitmapPtr) 	  - 1;
+#endif
+#ifdef __amigaos__
+	int y2 = y + le_get16((char*)(bitmapPtr)+2) - 1;
+#else
 	int y2 = y + *(((short*)bitmapPtr)+1) - 1;
+#endif
 
 	if( x2 < ZOOM_X1 || y2 < ZOOM_Y1 || x > ZOOM_X2 || y > ZOOM_Y2 )
 		return 0;
@@ -1999,8 +2034,16 @@ int ZoomMatrix::detect_bitmap_clip(int x, int y, char* bitmapPtr)
 //
 bool ZoomMatrix::is_bitmap_clip(int x, int y, char* bitmapPtr)
 {
+#ifdef __amigaos__
+	int x2 = x + le_get16(bitmapPtr) 	  - 1;
+#else
 	int x2 = x + *((short*)bitmapPtr) 	  - 1;
+#endif
+#ifdef __amigaos__
+	int y2 = y + le_get16((char*)(bitmapPtr)+2) - 1;
+#else
 	int y2 = y + *(((short*)bitmapPtr)+1) - 1;
+#endif
 
 	if( x2 < ZOOM_X1 || y2 < ZOOM_Y1 || x > ZOOM_X2 || y > ZOOM_Y2 )
 		return 0;
@@ -2022,8 +2065,16 @@ bool ZoomMatrix::is_bitmap_clip(int x, int y, char* bitmapPtr)
 //
 void ZoomMatrix::put_bitmap_remap_clip(int x, int y, char* bitmapPtr, char* colorRemapTable, int compressedFlag)
 {
+#ifdef __amigaos__
+	int x2 = x + le_get16(bitmapPtr) 	  - 1;
+#else
 	int x2 = x + *((short*)bitmapPtr) 	  - 1;
+#endif
+#ifdef __amigaos__
+	int y2 = y + le_get16((char*)(bitmapPtr)+2) - 1;
+#else
 	int y2 = y + *(((short*)bitmapPtr)+1) - 1;
+#endif
 
 	if( x2 < ZOOM_X1 || y2 < ZOOM_Y1 || x > ZOOM_X2 || y > ZOOM_Y2 )
 		return;
