@@ -22,6 +22,17 @@ What you need
 - About 110 MB of disk: the game's data comes with it.
 
 
+Installing
+----------
+
+Unpack the archive anywhere (on AmiCradle: SYS:Utilities/OpenCompress x
+sevenkingdoms-...lha RAM:), then double-click Install-SevenKingdoms beside
+the SevenKingdoms drawer: it checks for a 68040 with FPU and for
+SDL2.module (in LIBS:GFOpenGPU/, or copied there from LIBS:OpenGPU/), asks
+where to put the game (Work:Games by default) and updates an earlier
+install in place, keeping its Saves drawer (and a MUSIC drawer put there).
+
+
 Using it
 --------
 

@@ -1,0 +1,57 @@
+{
+  "drawer": "SevenKingdoms",
+  "drawer_icon": "amiga/icons/SevenKingdoms-drawer.info",
+  "archive": "sevenkingdoms-{version}-68040",
+  "members": [
+    {
+      "name": "SevenKingdoms",
+      "build": "SevenKingdoms",
+      "check": "executable_sha256"
+    },
+    {
+      "name": "",
+      "tar": "drawer.tar"
+    }
+  ],
+  "aminet": [
+    [
+      "Short",
+      "Seven Kingdoms: Ancient Adversaries, real-time strategy, 68040+FPU"
+    ],
+    [
+      "Author",
+      "Trevor Chan, Enlight (Seven Kingdoms); the 7kaa team; Amiga port: AmiCradle Team"
+    ],
+    [
+      "Uploader",
+      "AmiCradle Team"
+    ],
+    [
+      "Type",
+      "game/strat"
+    ],
+    [
+      "Version",
+      "{version}"
+    ],
+    [
+      "Requires",
+      "AmigaOS 3.2, 68040/68060 with FPU, RTG, 32 MB fast RAM, GFOpenGPU (SDL2.module)"
+    ],
+    [
+      "Architecture",
+      "m68k-amigaos >= 3.0"
+    ]
+  ],
+  "root": [
+    {
+      "name": "Install-SevenKingdoms",
+      "repo": "package/installer/Install-SevenKingdoms",
+      "installer": true
+    },
+    {
+      "name": "Install-SevenKingdoms.info",
+      "repo": "package/installer/Install-SevenKingdoms.info"
+    }
+  ]
+}
