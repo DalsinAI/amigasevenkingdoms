@@ -1,0 +1,13 @@
+{
+  "name": "Seven Kingdoms",
+  "version": "2.15.6-amiga1",
+  "drawer": "SevenKingdoms",
+  "program": "SevenKingdoms",
+  "cpu": "68040",
+  "fpu": true,
+  "space": 115000000,
+  "modules": ["SDL2.module"],
+  "keep": ["Saves"],
+  "parent": "Work:Games",
+  "badge": "../amiga/icons/art/7kaa.png"
+}
