@@ -374,7 +374,10 @@ void Game::disp_version()
 		str += "-dev";
 	#endif
 
-	#ifndef HAVE_KNOWN_BUILD
+	// The Amiga build is not one of upstream's known (x87) builds, and
+	// ConfigAdv still says so to multiplayer and replays, but the menu
+	// shows the plain version there rather than "2.15.6?".
+	#if !defined(HAVE_KNOWN_BUILD) && !defined(__amigaos__)
 		str += "?";
 	#endif
 
