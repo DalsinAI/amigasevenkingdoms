@@ -69,7 +69,6 @@ package: $(OUT)/$(PROG) $(ICONS) AMIGA_PORT.md COPYING README
 	cp COPYING $(OUT)/COPYING.txt
 	cp amiga/icons/SevenKingdoms.info amiga/icons/ReadMe.info \
 	   amiga/icons/README-7kaa.info amiga/icons/COPYING.txt.info $(OUT)/
-	cd $(OUT) && find . -mindepth 1 -type d | while read d; do cp $(CURDIR)/amiga/icons/Data.info "$$d.info"; done
 	cp amiga/icons/SevenKingdoms-drawer.info $(BUILD)/SevenKingdoms.info
 
 # The port's own C++ includes upstream's headers as system headers, so

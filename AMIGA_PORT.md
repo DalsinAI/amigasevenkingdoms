@@ -107,8 +107,8 @@ with the compiler's default warnings, as upstream's configure builds them,
 and give none; amiga/ builds with -Wall -Wextra and gives none. The program
 passes fpcr_check.py (GCC 16's float-to-int store).
 
-Icons: amiga/icons/icons.json, from the game's own icon
-(data/IMAGE/7K_ICON.BMP):
+Icons: amiga/icons/icons.json, from our own GlowIcon art
+(amiga/icons/art/sevenkingdoms.svg):
 
     python3 AMICRADLE/scripts/port_icons.py amiga/icons/icons.json --out amiga/icons
 
