@@ -65,6 +65,7 @@ package: $(OUT)/$(PROG) $(ICONS) AMIGA_PORT.md COPYING README
 	find $(OUT) -name Makefile.am -exec rm -f {} +
 	mkdir -p $(OUT)/Saves
 	cp AMIGA_PORT.md $(OUT)/ReadMe
+	cp amiga/Controls $(OUT)/Controls
 	cp README $(OUT)/README-7kaa
 	cp COPYING $(OUT)/COPYING.txt
 	cp amiga/icons/SevenKingdoms.info amiga/icons/ReadMe.info \
